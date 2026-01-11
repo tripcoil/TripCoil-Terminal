@@ -488,6 +488,12 @@
             appendLine(`<span class="prompt">FROM TERMINAL:</span> <span>${val}</span>`);
             // Seed established. Initialize currentFrom.
             this.currentFrom = { p: this.inputs.p, d: this.inputs.d, t: this.inputs.t, count: 0 };
+
+            // Clean up the setup lines (From Panel, Device, Terminal)
+            removeLastLine();
+            removeLastLine();
+            removeLastLine();
+
             this.startDestinationPhase();
             break;
 
@@ -641,7 +647,10 @@
           case P.SEED_TERMINAL: label = 'FROM TERMINAL?'; break;
 
           case P.DEST_PANEL:
-            label = `[FROM ${this.currentFrom.p}/${this.currentFrom.d}/${this.currentFrom.t}] TO PANEL?`; // Contextual prompt
+            {
+              const loc = `${this.currentFrom.p}/${this.currentFrom.d}/${this.currentFrom.t}`;
+              label = `<span style="color:#00e5ff; font-weight:bold">AT ${loc}</span> TO PANEL?`;
+            }
             break;
           case P.DEST_DEVICE: label = 'TO DEVICE?'; break;
           case P.DEST_TERMINAL: label = 'TO TERMINAL?'; break;
