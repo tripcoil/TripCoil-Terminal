@@ -1,754 +1,808 @@
 <!doctype html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Mock Terminal Wizard</title>
+  <title>TripCoil Terminal V1.1</title>
   <style>
-    :root{
+    :root {
       --bg: #05080a;
       --fg: #b8ffe1;
       --dim: #67d7b3;
       --accent: #19ff9a;
       --warn: #ffd36a;
-      --shadow: rgba(25,255,154,.20);
-      --scan: rgba(25,255,154,.06);
-      --border: rgba(25,255,154,.20);
-    }
-    html,body{ height:100%; margin:0; background: radial-gradient(1200px 700px at 30% 20%, #071115 0%, var(--bg) 55%, #030506 100%); }
-    body{ display:flex; align-items:center; justify-content:center; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
-
-    .frame{
-      width:min(980px, 92vw);
-      height:min(620px, 86vh);
-      border-radius:18px;
-      border:1px solid var(--border);
-      box-shadow:
-        0 0 0 1px rgba(255,255,255,.03) inset,
-        0 20px 70px rgba(0,0,0,.65),
-        0 0 40px var(--shadow);
-      overflow:hidden;
-      position:relative;
-      background:
-        linear-gradient(180deg, rgba(255,255,255,.03), rgba(0,0,0,.06)),
-        radial-gradient(900px 420px at 70% 30%, rgba(25,255,154,.08), transparent 60%);
+      --shadow: rgba(25, 255, 154, .20);
+      --scan: rgba(25, 255, 154, .06);
+      --border: rgba(25, 255, 154, .20);
     }
 
-    /* faux title bar */
-    .titlebar{
-      height:44px;
-      display:flex;
-      align-items:center;
-      padding:0 14px;
-      gap:10px;
-      border-bottom:1px solid rgba(255,255,255,.06);
-      background: linear-gradient(180deg, rgba(0,0,0,.35), rgba(0,0,0,.15));
-    }
-    .dots{ display:flex; gap:8px; }
-    .dot{ width:10px; height:10px; border-radius:999px; opacity:.85; }
-    .dot.red{ background:#ff5f57; }
-    .dot.yellow{ background:#febc2e; }
-    .dot.green{ background:#28c840; }
-    .title{
-      color:rgba(184,255,225,.8);
-      font-size:13px;
-      letter-spacing:.4px;
-      user-select:none;
-    }
-    .hint{
-      margin-left:auto;
-      color:rgba(184,255,225,.55);
-      font-size:12px;
-      user-select:none;
-    }
-    .hint kbd{
-      padding:.1rem .35rem;
-      border:1px solid rgba(184,255,225,.18);
-      border-bottom-color: rgba(184,255,225,.10);
-      border-radius:6px;
-      background: rgba(0,0,0,.25);
-      color:rgba(184,255,225,.75);
-      font-size:11px;
+    html,
+    body {
+      height: 100%;
+      margin: 0;
+      background: radial-gradient(1200px 700px at 30% 20%, #071115 0%, var(--bg) 55%, #030506 100%);
+      overflow: hidden;
     }
 
-    /* terminal surface */
-    .terminal{
-      position:absolute;
-      inset:44px 0 0 0;
-      padding:18px 18px 22px 18px;
-      color:var(--fg);
-      overflow:auto;
-      line-height:1.35;
-      font-size:15px;
-      text-shadow: 0 0 10px rgba(25,255,154,.12);
+    body {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
     }
 
-    /* scanline / glow */
-    .terminal::before{
-      content:"";
-      position:absolute;
-      inset:0;
-      pointer-events:none;
-      background:
-        repeating-linear-gradient(
-          to bottom,
-          rgba(0,0,0,0) 0px,
-          rgba(0,0,0,0) 2px,
-          rgba(0,0,0,.06) 3px
-        );
-      mix-blend-mode: multiply;
-      opacity:.55;
-    }
-    .terminal::after{
-      content:"";
-      position:absolute;
-      inset:0;
-      pointer-events:none;
-      background: radial-gradient(900px 420px at 20% 0%, var(--scan), transparent 60%);
-      opacity:.9;
+    .frame {
+      width: min(980px, 92vw);
+      height: min(620px, 86vh);
+      border-radius: 18px;
+      border: 1px solid var(--border);
+      box-shadow: 0 0 40px var(--shadow);
+      overflow: hidden;
+      position: relative;
+      background: #000;
     }
 
-    .content{
-      position:relative;
-      z-index:1;
-      white-space:pre-wrap;
-      word-break:break-word;
+    .titlebar {
+      height: 44px;
+      display: flex;
+      align-items: center;
+      padding: 0 14px;
+      background: rgba(0, 0, 0, 0.5);
+      border-bottom: 1px solid var(--border);
     }
 
-    .line{ display:block; padding:1px 0; }
-    .prompt{
-      color:var(--accent);
-    }
-    .meta{
-      color:rgba(184,255,225,.68);
-    }
-    .header{
-      color:var(--warn);
-      font-weight:600;
-      letter-spacing:.2px;
-      margin-bottom:8px;
-    }
-    .header.green{
-      color:#28c840;
-    }
-    .header.red{
-      color:#ff5f57;
+    .title {
+      color: var(--fg);
+      font-size: 13px;
+      opacity: 0.8;
     }
 
-    /* input row */
-    .input-row{
-      display:flex;
-      align-items:baseline;
-      gap:10px;
-      padding-top:8px;
+    .header.green {
+      color: #28c840;
+      font-weight: bold;
     }
-    .caret{
-      display:inline-block;
-      width:9px;
-      height:1.05em;
+
+    .header.red {
+      color: #ff5f57;
+      font-weight: bold;
+    }
+
+    .terminal {
+      position: absolute;
+      inset: 44px 0 0 0;
+      padding: 20px;
+      color: var(--fg);
+      overflow-y: auto;
+    }
+
+    .prompt {
+      color: var(--accent);
+    }
+
+    .input-row {
+      display: flex;
+      align-items: baseline;
+      gap: 10px;
+      padding: 2px 0;
+    }
+
+    .input-group {
+      display: inline-flex;
+      gap: 0;
+    }
+
+    .caret {
+      display: inline-block;
+      width: 9px;
+      height: 1.1em;
       background: var(--accent);
-      box-shadow: 0 0 14px rgba(25,255,154,.55);
-      margin-left:2px;
-      transform: translateY(2px);
-      animation: blink 1s steps(1,end) infinite;
-    }
-    @keyframes blink{
-      50%{ opacity:0; }
+      animation: blink 1s infinite;
+      vertical-align: middle;
     }
 
-    .ghost-input{
-      position:absolute;
-      left:-9999px;
-      top:-9999px;
-      opacity:0;
+    @keyframes blink {
+      50% {
+        opacity: 0;
+      }
     }
 
-    /* subtle scrollbar */
-    .terminal::-webkit-scrollbar{ width:10px; }
-    .terminal::-webkit-scrollbar-thumb{
-      background: rgba(184,255,225,.10);
-      border: 1px solid rgba(184,255,225,.14);
-      border-radius: 10px;
+    /* Fix for Safari/Brave focus */
+    .ghost-input {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 1px;
+      height: 1px;
+      opacity: 0;
+      border: none;
+      pointer-events: none;
+      z-index: -1;
     }
 
-    .click-to-focus{
-      position:absolute;
-      inset:44px 0 0 0;
-      z-index:2;
-      pointer-events:none;
+    .notepad-overlay {
+      display: none;
+      position: absolute;
+      inset: 0;
+      background: #fff;
+      z-index: 100;
+      flex-direction: column;
+      color: #000;
+    }
+
+    .notepad-header {
+      height: 32px;
+      background: #eee;
+      border-bottom: 1px solid #ccc;
+      display: flex;
+      align-items: center;
+      padding-left: 10px;
+      font-family: sans-serif;
+      font-size: 12px;
+    }
+
+    .notepad-close {
+      margin-left: auto;
+      width: 45px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+    }
+
+    .notepad-close:hover {
+      background: #e81123;
+      color: #fff;
+    }
+
+    .notepad-content {
+      flex: 1;
+      padding: 15px;
+      font-family: 'Consolas', monospace;
+      font-size: 14px;
+      border: none;
+      outline: none;
+      resize: none;
+    }
+
+    .edit-menu {
+      display: flex;
+      gap: 8px;
+      margin-left: 15px;
+    }
+
+    .cmd-btn {
+      background: #e0e0e0;
+      border: 1px solid #b0b0b0;
+      padding: 2px 8px;
+      font-size: 11px;
+      cursor: pointer;
+      font-family: sans-serif;
+      color: #333;
+    }
+
+    .cmd-btn:hover {
+      background: #d0d0d0;
+      border-color: #999;
+    }
+
+    .cmd-btn:active {
+      background: #ccc;
+    }
+
+    /* Mobile Controls */
+    .mobile-controls {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      z-index: 50;
+      opacity: 0.6;
+    }
+
+    .mobile-controls:hover {
+      opacity: 1;
+    }
+
+    .history-btn {
+      width: 40px;
+      height: 40px;
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid var(--accent);
+      color: var(--accent);
+      font-size: 20px;
+      border-radius: 50%;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      user-select: none;
+      backdrop-filter: blur(2px);
+    }
+
+    .history-btn:active {
+      background: var(--accent);
+      color: #000;
     }
   </style>
 </head>
+
 <body>
-  <div class="frame" id="frame">
+  <div class="frame">
     <div class="titlebar">
-      <div class="title" id="main-header"></div>
+      <div class="title" id="main-header">TRIPCOIL TERMINAL V1.1</div>
+    </div>
+    <div class="terminal" id="terminal">
+      <div id="content"></div>
+      <input class="ghost-input" id="ghost" type="text" autocomplete="off" spellcheck="false" autofocus>
     </div>
 
-    <div class="terminal" id="terminal" aria-label="Mock terminal" role="application">
-      <div class="content" id="content"></div>
-      <input class="ghost-input" id="ghost" autocomplete="off" autocapitalize="off" spellcheck="false" />
+    <div class="notepad-overlay" id="notepad-overlay">
+      <div class="notepad-header">
+        <span>TC-Export.txt - Notepad</span>
+        <div class="edit-menu">
+          <button class="cmd-btn" id="btn-copy">COPY</button>
+          <button class="cmd-btn" id="btn-paste">PASTE</button>
+        </div>
+        <div class="notepad-close" onclick="closeNotepad()">✕</div>
+      </div>
+      <textarea class="notepad-content" id="notepad-textarea"></textarea>
+    </div>
+
+    <div class="mobile-controls">
+      <div class="history-btn" id="btn-up">∧</div>
+      <div class="history-btn" id="btn-down">∨</div>
     </div>
   </div>
 
   <script>
-    (() => {
-      const content = document.getElementById('content');
-      const terminal = document.getElementById('terminal');
-      const ghost = document.getElementById('ghost');
-      const frame = document.getElementById('frame');
+    const content = document.getElementById('content');
+    const terminal = document.getElementById('terminal');
+    const ghost = document.getElementById('ghost');
+    const overlay = document.getElementById('notepad-overlay');
+    const textArea = document.getElementById('notepad-textarea');
+    const btnCopy = document.getElementById('btn-copy');
+    const btnPaste = document.getElementById('btn-paste');
+    const btnUp = document.getElementById('btn-up');
+    const btnDown = document.getElementById('btn-down');
+    const mainHeader = document.getElementById('main-header'); // Cached ref
 
-      // ----- Flow definition -----
-      const flow = [
-        { key: 'fromPanel',    label: 'FROM PANEL?' },
-        { key: 'fromDevice',   label: 'FROM DEVICE?' },
-        { key: 'fromTerminal', label: 'FROM TERMINAL?' },
+    // --- STATE MANAGEMENT ---
+    const STATE_MENU = 'MENU';
+    const STATE_TRACE = 'TRACE';
+    let currentState = STATE_MENU;
 
-        // after first 3: clear + header, then:
-        { key: 'toPanel',      label: 'TO PANEL?', dynamicLabel: true },
-        { key: 'toDevice',     label: 'TO DEVICE?' },
-        { key: 'toTerminal',   label: 'TO TERMINAL?' },
-      ];
+    // --- SHARED UTILS ---
+    let inputBuffer = '';
 
-      const answers = {
-        fromPanel: '',
-        fromDevice: '',
-        fromTerminal: '',
-        toPanel: '',
-        toDevice: '',
-        toTerminal: '',
-        callsBack: undefined,
-      };
+    // History
+    const commandHistory = [];
+    let historyIndex = -1;
+    let tempInputBuffer = '';
 
-      // Each committed step is a record so Esc can undo it cleanly
-      const commits = []; // { stepIndex, promptLineId, answerLineId, previousValue }
+    function setHeader(text, type = 'normal') {
+      mainHeader.textContent = text;
+      mainHeader.className = 'title'; // Reset
+      if (type === 'green') mainHeader.className += ' header green';
+      if (type === 'red') mainHeader.className += ' header red';
+    }
 
-      let stepIndex = 0;
-      let inputBuffer = '';
-      let headerShown = false;
+    function clearTerminal() {
+      content.innerHTML = '';
+      inputBuffer = '';
+    }
 
-      // ----- Rendering helpers -----
-      const mkSpan = (cls, text) => {
-        const s = document.createElement('span');
-        if (cls) s.className = cls;
-        s.textContent = text;
-        return s;
-      };
+    function appendLine(html) {
+      const div = document.createElement('div');
+      div.className = 'term-line'; // Class for easier removal
+      div.innerHTML = html;
+      content.appendChild(div);
+      terminal.scrollTop = terminal.scrollHeight;
+    }
 
-      const mkLine = (cls) => {
-        const d = document.createElement('div');
-        d.className = 'line' + (cls ? ` ${cls}` : '');
-        d.dataset.lineId = String(Math.random()).slice(2);
-        return d;
-      };
+    function removeLastLine() {
+      const lines = content.getElementsByClassName('term-line');
+      if (lines.length > 0) {
+        lines[lines.length - 1].remove();
+      }
+    }
 
-      const appendLine = (lineEl) => {
-        content.appendChild(lineEl);
-        scrollToBottom();
-        return lineEl.dataset.lineId;
-      };
+    function renderInput(prompt) {
+      let active = document.getElementById('active-row');
+      if (active) active.remove();
 
-      const findLineById = (id) => {
-        return content.querySelector(`[data-line-id="${CSS.escape(id)}"]`);
-      };
+      const row = document.createElement('div');
+      row.id = 'active-row';
+      row.className = 'input-row';
+      // Using the robust .input-group fix
+      row.innerHTML = `<span class="prompt">${prompt}</span> <span class="input-group"><span>${inputBuffer}</span><span class="caret"></span></span>`;
+      content.appendChild(row);
+      terminal.scrollTop = terminal.scrollHeight;
+    }
 
-      const removeLineById = (id) => {
-        const el = findLineById(id);
-        if (el) el.remove();
-      };
+    // --- HISTORY LOGIC ---
+    function navigateHistory(direction) {
+      if (commandHistory.length === 0) return;
 
-      const clearScreen = () => {
-        content.innerHTML = '';
-      };
+      if (historyIndex === -1 && direction === -1) {
+        tempInputBuffer = inputBuffer;
+        historyIndex = commandHistory.length - 1;
+      } else {
+        historyIndex += direction;
+      }
 
-      const scrollToBottom = () => {
-        // keep the "terminal" pinned to bottom
-        terminal.scrollTop = terminal.scrollHeight;
-      };
+      if (historyIndex < -1) historyIndex = -1;
+      if (historyIndex >= commandHistory.length) historyIndex = commandHistory.length - 1;
 
-      const buildHeaderText = () => {
-        // FROM PANEL [FROM PANEL] [FROM DEVICE]/[FROM TERMINAL]
-        const fp = answers.fromPanel || '';
-        const fd = answers.fromDevice || '';
-        const ft = answers.fromTerminal || '';
-        return `FROM PANEL ${fp} ${fd}/${ft}`;
-      };
+      if (historyIndex === -1) {
+        inputBuffer = tempInputBuffer;
+      } else {
+        inputBuffer = commandHistory[historyIndex];
+      }
+      refreshUI();
+    }
 
-      const renderHeaderIfNeeded = () => {
-        if (headerShown) return;
-        const headerLine = mkLine('header');
-        headerLine.textContent = buildHeaderText();
-        appendLine(headerLine);
-        headerShown = true;
-      };
+    // --- MOBILE BUTTONS ---
+    if (btnUp && btnDown) {
+      btnUp.addEventListener('click', (e) => {
+        e.stopPropagation();
+        // Undo Action
+        if (currentState === STATE_TRACE) {
+          TraceTool.undo();
+        } else {
+          navigateHistory(-1); // Menu context
+        }
+        focus();
+      });
+      btnDown.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (currentState === STATE_MENU) navigateHistory(1);
+        focus();
+      });
+    }
 
-      const renderIntro = () => {
-        // Intro removed
-      };
+    // --- MAIN MENU PROGRAM ---
+    const MenuTool = {
+      init() {
+        clearTerminal();
+        setHeader('TRIPCOIL TERMINAL V1.1');
+        appendLine('<span class="prompt">AVAILABLE PROGRAMS:</span>');
+        appendLine('&nbsp;&nbsp;1. TRACE TOOL');
+        appendLine('<br>'); // spacer
+        inputBuffer = '';
+        this.render();
+      },
+      handleInput(val) { // val is fully committed string OR we handle keystrokes? 
+        // Architecture decision: handle key logic globally, pass committed string here?
+        // Let's stick to global buffer, this handles the ACTION.
+        if (val === '1' || val === 'TRACE TOOL' || val === 'TRACE') {
+          switchState(STATE_TRACE);
+        } else {
+          appendLine(`<span class="prompt">SELECT PROGRAM></span> <span>${val}</span>`);
+          appendLine(`<span style="color:var(--warn)">INVALID SELECTION</span>`);
+        }
+      },
+      render() {
+        renderInput('SELECT PROGRAM>');
+      }
+    };
 
-      // Convert callback value to CSV format
-      const convertCallback = (val) => {
-        if (!val || val.trim() === '') return '?';
-        const upper = val.toUpperCase().trim();
-        if (upper === 'Y') return '.';
-        if (upper === 'N') return '!';
-        return '?';
-      };
+    // --- TRACE TOOL PROGRAM (LOOP-BACK & BRANCH) ---
+    const TraceTool = {
+      // State
+      discoveryStack: [], // Renamed from stack
+      history: [],
+      inputs: {},
+      phase: 'SEED',
+      currentFrom: null,
+      undoStack: [], // Snapshots
 
-      // Generate CSV format
-      // Format: [FROMPANEL],[FROMDEVICE],[FROMTERMINAL],[CALLBACK],[TOPANEL],[TODEVICE],[TOTERMINAL]
-      // Example: 1,AA,A01,.,1,BB,01
-      const generateCSV = () => {
-        const fp = answers.fromPanel || '';
-        const fd = answers.fromDevice || '';
-        const ft = answers.fromTerminal || '';
-        const callback = convertCallback(answers.callsBack);
-        const tp = answers.toPanel || '';
-        const td = answers.toDevice || '';
-        const tt = answers.toTerminal || '';
-        
-        // Match example format exactly: all fields separated by commas
-        return `${fp},${fd},${ft},${callback},${tp},${td},${tt}`;
-      };
+      // Constants
+      PHASE: {
+        SEED_PANEL: 'SEED_PANEL',
+        SEED_DEVICE: 'SEED_DEVICE',
+        SEED_TERMINAL: 'SEED_TERMINAL',
 
-      // Copy to clipboard
-      const copyToClipboard = async (text) => {
-        try {
-          await navigator.clipboard.writeText(text);
-          return true;
-        } catch (err) {
-          // Fallback for older browsers
-          const textArea = document.createElement('textarea');
-          textArea.value = text;
-          textArea.style.position = 'fixed';
-          textArea.style.left = '-999999px';
-          document.body.appendChild(textArea);
-          textArea.focus();
-          textArea.select();
-          try {
-            document.execCommand('copy');
-            document.body.removeChild(textArea);
-            return true;
-          } catch (err) {
-            document.body.removeChild(textArea);
-            return false;
+        DEST_PANEL: 'DEST_PANEL',
+        DEST_DEVICE: 'DEST_DEVICE',
+        DEST_TERMINAL: 'DEST_TERMINAL',
+
+        CALLBACK: 'CALLBACK',
+        DENSITY: 'DENSITY',
+
+        COMPLETE: 'COMPLETE'
+      },
+
+      init() {
+        clearTerminal();
+        setHeader('TRACE TOOL - LOOP-BACK BRANCH MODE');
+        this.discoveryStack = [];
+        this.history = [];
+        this.undoStack = [];
+        this.inputs = {};
+        this.currentFrom = null;
+        this.phase = this.PHASE.SEED_PANEL;
+        inputBuffer = '';
+        this.render();
+      },
+
+      saveState(processedInput) {
+        // Serialize current state
+        const snapshot = {
+          phase: this.phase,
+          inputs: JSON.parse(JSON.stringify(this.inputs)),
+          discoveryStack: JSON.parse(JSON.stringify(this.discoveryStack)),
+          history: JSON.parse(JSON.stringify(this.history)),
+          currentFrom: this.currentFrom ? JSON.parse(JSON.stringify(this.currentFrom)) : null,
+          lastInput: processedInput
+        };
+        this.undoStack.push(snapshot);
+      },
+
+      undo() {
+        if (this.undoStack.length === 0) return;
+
+        const snap = this.undoStack.pop();
+
+        // Restore
+        this.phase = snap.phase;
+        this.inputs = snap.inputs;
+        this.discoveryStack = snap.discoveryStack;
+        this.history = snap.history;
+        this.currentFrom = snap.currentFrom;
+
+        // Visual: Remove last line
+        removeLastLine();
+
+        // Input: Restore what they typed
+        inputBuffer = snap.lastInput;
+
+        this.render();
+      },
+
+      handleInput(val) {
+        this.saveState(val); // Undo point -> Current State + The Input being processed
+
+        const P = this.PHASE;
+
+        switch (this.phase) {
+          // --- SEED PHASE ---
+          case P.SEED_PANEL:
+            this.inputs.p = val;
+            appendLine(`<span class="prompt">FROM PANEL:</span> <span>${val}</span>`);
+            this.phase = P.SEED_DEVICE;
+            break;
+
+          case P.SEED_DEVICE:
+            this.inputs.d = val;
+            appendLine(`<span class="prompt">FROM DEVICE:</span> <span>${val}</span>`);
+            this.phase = P.SEED_TERMINAL;
+            break;
+
+          case P.SEED_TERMINAL:
+            this.inputs.t = val;
+            appendLine(`<span class="prompt">FROM TERMINAL:</span> <span>${val}</span>`);
+            // Seed established. Initialize currentFrom.
+            this.currentFrom = { p: this.inputs.p, d: this.inputs.d, t: this.inputs.t, count: 0 };
+            this.startDestinationPhase();
+            break;
+
+          // --- DESTINATION PHASE ---
+          case P.DEST_PANEL:
+            this.inputs.toP = val;
+            appendLine(`<span class="prompt">TO PANEL:</span> <span>${val}</span>`);
+            this.phase = P.DEST_DEVICE;
+            break;
+
+          case P.DEST_DEVICE:
+            this.inputs.toD = val;
+            appendLine(`<span class="prompt">TO DEVICE:</span> <span>${val}</span>`);
+            this.phase = P.DEST_TERMINAL;
+            break;
+
+          case P.DEST_TERMINAL:
+            this.inputs.toT = val;
+            appendLine(`<span class="prompt">TO TERMINAL:</span> <span>${val}</span>`);
+            this.phase = P.CALLBACK;
+            break;
+
+          // --- CALLBACK PHASE ---
+          case P.CALLBACK:
+            const norm = val.toUpperCase().trim();
+            const isYes = norm.startsWith('Y');
+            this.inputs.callsBack = isYes ? 'Y' : 'N';
+
+            appendLine(`<span class="prompt">CALLS BACK TO ${this.currentFrom.p}/${this.currentFrom.d}/${this.currentFrom.t}?</span> <span>${this.inputs.callsBack}</span>`);
+
+            // Update Header Color
+            const hdrText = `(PANEL ${this.inputs.toP}) ${this.inputs.toD}/${this.inputs.toT}`;
+            setHeader(hdrText, isYes ? 'green' : 'red');
+
+            this.phase = P.DENSITY;
+            break;
+
+          // --- DENSITY PHASE ---
+          case P.DENSITY:
+            const count = parseInt(val);
+            if (isNaN(count)) {
+              appendLine(`<span style="color:var(--warn)">INVALID NUMBER</span>`);
+              this.render();
+              return;
+            }
+            appendLine(`<span class="prompt">BESIDES ${this.currentFrom.p}/${this.currentFrom.d}/${this.currentFrom.t}, HOW MANY WIRES ON ${this.inputs.toP}/${this.inputs.toD}/${this.inputs.toT}?</span> <span>${val}</span>`);
+            this.processJump(count);
+            break;
+        }
+
+        this.render();
+      },
+
+      startDestinationPhase() {
+        this.inputs.toP = '';
+        this.inputs.toD = '';
+        this.inputs.toT = ''; // Clear destination buffer
+        this.inputs.callsBack = '';
+        this.phase = this.PHASE.DEST_PANEL;
+      },
+
+      markHistoryComplete(term) {
+        // Update any history records where this terminal was the destination
+        this.history.forEach(h => {
+          if (h.to.p === term.p && h.to.d === term.d && h.to.t === term.t) {
+            h.status = 'C';
           }
-        }
-      };
+        });
+      },
 
-      // Render the active input row (single line) at bottom:
-      let activeInputLineId = null;
+      processJump(toCount) {
+        // 1. Determine Status (Column 12)
+        const status = toCount > 0 ? `${toCount}?` : 'C';
 
-      const renderActivePrompt = () => {
-        // Remove previous active input row (if any)
-        if (activeInputLineId) removeLineById(activeInputLineId);
-
-        // Check if we're in callsBack phase (after completion)
-        if (stepIndex >= flow.length && answers.callsBack === undefined) {
-          // Show callsBack prompt after yellow header
-          const line = mkLine();
-          line.classList.add('input-row');
-
-          const prompt = document.createElement('span');
-          prompt.className = 'prompt';
-          const fp = answers.fromPanel || '';
-          const fd = answers.fromDevice || '';
-          const ft = answers.fromTerminal || '';
-          prompt.textContent = `CALLS BACK TO ${fp} ${fd}/${ft}?`;
-
-          const input = document.createElement('span');
-          input.className = 'input';
-          input.textContent = ' ' + inputBuffer;
-
-          const caret = document.createElement('span');
-          caret.className = 'caret';
-
-          line.appendChild(prompt);
-          line.appendChild(input);
-          line.appendChild(caret);
-
-          activeInputLineId = appendLine(line);
-          return;
-        }
-
-        const step = flow[stepIndex];
-        const line = mkLine();
-        line.classList.add('input-row');
-
-        const prompt = document.createElement('span');
-        prompt.className = 'prompt';
-        prompt.textContent = step.label;
-
-        const input = document.createElement('span');
-        input.className = 'input';
-        input.textContent = ' ' + inputBuffer;
-
-        const caret = document.createElement('span');
-        caret.className = 'caret';
-
-        line.appendChild(prompt);
-        line.appendChild(input);
-        line.appendChild(caret);
-
-        activeInputLineId = appendLine(line);
-      };
-
-      const commitAnswer = () => {
-        // Handle callsBack prompt (after completion)
-        if (stepIndex >= flow.length && answers.callsBack === undefined) {
-          const val = inputBuffer.trim();
-          removeLineById(activeInputLineId);
-          activeInputLineId = null;
-
-          const fp = answers.fromPanel || '';
-          const fd = answers.fromDevice || '';
-          const ft = answers.fromTerminal || '';
-          const promptLabel = `CALLS BACK TO ${fp} ${fd}/${ft}?`;
-
-          const previousValue = answers.callsBack || '';
-          answers.callsBack = val;
-
-          const permanent = mkLine();
-          permanent.appendChild(mkSpan('prompt', promptLabel));
-          permanent.appendChild(mkSpan('', ' ' + val));
-          const promptLineId = appendLine(permanent);
-
-          commits.push({
-            stepIndex: flow.length, // Special stepIndex for callsBack
-            promptLineId,
-            answerLineId: null,
-            previousValue,
-            answerKey: 'callsBack'
-          });
-
-          inputBuffer = '';
-          
-          // Update header color based on callback
-          updateHeaderColor();
-          
-          // Stay in "done" state, no more prompts
-          return;
-        }
-
-        const step = flow[stepIndex];
-        const val = inputBuffer;
-
-        // Replace the active input row with a permanent prompt+answer line
-        // (so the line stays "up" after you press enter)
-        removeLineById(activeInputLineId);
-        activeInputLineId = null;
-
-        const previousValue = answers[step.key] || '';
-        answers[step.key] = val;
-
-        const permanent = mkLine();
-        permanent.appendChild(mkSpan('prompt', step.label));
-        permanent.appendChild(mkSpan('', ' ' + val));
-        const promptLineId = appendLine(permanent);
-
-        // record commit for Esc undo
-        commits.push({
-          stepIndex,
-          promptLineId,
-          answerLineId: null, // kept for future expansions, not needed currently
-          previousValue,
-          answerKey: step.key
+        // 2. Record WIR Row
+        // Mapping: From(2,3,4) -> To(8,9,10) ... Status(12)
+        this.history.push({
+          from: { p: this.currentFrom.p, d: this.currentFrom.d, t: this.currentFrom.t },
+          to: { p: this.inputs.toP, d: this.inputs.toD, t: this.inputs.toT },
+          callsBack: this.inputs.callsBack,
+          status: status
         });
 
-        inputBuffer = '';
-        stepIndex++;
+        appendLine(`<div style="color:var(--dim)">> TRACED: ${this.currentFrom.t} -> ${this.inputs.toT} [${status}]</div>`);
 
-        // Phase transition after first 3
-        if (stepIndex === 3) {
-          // clear and show header + continue asking TO questions
-          clearScreen();
-          renderHeaderIfNeeded();
-          appendLine(mkLine()); // blank line under header
-        }
+        // 3. Update Discovery Stack (The Countdown)
+        // If currentFrom is in discoveryStack, decrement it.
+        // We need to find the specific reference in the discoveryStack.
+        const stackIdx = this.discoveryStack.findIndex(n =>
+          n.p === this.currentFrom.p && n.d === this.currentFrom.d && n.t === this.currentFrom.t
+        );
 
-        // If finished
-        if (stepIndex >= flow.length) {
-          // Clear terminal and show yellow header with last panel/device/terminal in titlebar
-          clearScreen();
-          headerShown = false;
-          
-          const panel = answers.toPanel || '';
-          const device = answers.toDevice || '';
-          const terminal = answers.toTerminal || '';
-          const headerEl = document.getElementById('main-header');
-          if (headerEl) {
-            headerEl.textContent = `(PANEL ${panel}) ${device}/${terminal}`;
-            headerEl.className = 'title header'; // Add header class for styling
-            updateHeaderColor();
-          }
-
-          // Show callsBack prompt next
-          stepIndex = flow.length; // "done" state but will show callsBack prompt
-          inputBuffer = '';
-          renderActivePrompt();
-          return;
-        }
-
-        renderActivePrompt();
-      };
-
-      const renderDonePrompt = () => {
-        // Show a minimal editable line in "done" state
-        if (activeInputLineId) removeLineById(activeInputLineId);
-
-        const line = mkLine();
-        line.classList.add('input-row');
-
-        const prompt = document.createElement('span');
-        prompt.className = 'prompt';
-        prompt.textContent = 'EDIT?';
-
-        const input = document.createElement('span');
-        input.textContent = ' (Esc to go back)';
-
-        line.appendChild(prompt);
-        line.appendChild(input);
-
-        activeInputLineId = appendLine(line);
-      };
-
-      const goBackOneStep = () => {
-        if (commits.length === 0) return;
-
-        // If we are in "done" state, remove the EDIT? prompt and any trailing lines added after completion
-        if (stepIndex >= flow.length) {
-          // remove the last active input line
-          if (activeInputLineId) removeLineById(activeInputLineId);
-          activeInputLineId = null;
-
-          // Soft-trim: remove lines until we hit the last committed prompt line (or content end)
-          // Easiest: clear and re-render the whole current phase based on commits.
-        }
-
-        // Pop last commit and revert
-        const last = commits.pop();
-        let revertedStepIndex = last.stepIndex;
-
-        if (last.answerKey === 'callsBack') {
-          answers.callsBack = last.previousValue;
-          // If we're going back from callsBack, go back to the completion state
-          revertedStepIndex = flow.length;
-        } else {
-          const step = flow[revertedStepIndex];
-          answers[step.key] = last.previousValue;
-        }
-
-        // Re-render entire terminal based on current progress (robust, simple)
-        rerenderFromState(revertedStepIndex, /*restoreInput*/ true);
-      };
-
-      const rerenderFromState = (targetStepIndex, restoreInput) => {
-        // Determine which phase we're in:
-        // stepIndex < 3 => before clear
-        // stepIndex >=3 => after clear/header
-        // We'll rebuild using commits up to (but not including) targetStepIndex as completed.
-        clearScreen();
-        activeInputLineId = null;
-
-        const completed = commits
-          .slice()
-          .sort((a,b) => a.stepIndex - b.stepIndex);
-
-        // Decide if header should be shown based on whether we have completed the first 3.
-        headerShown = false;
-
-        // If we're still in phase 1:
-        if (targetStepIndex < 3) {
-          renderIntro();
-          // Print committed phase-1 lines
-          for (const c of completed) {
-            if (c.stepIndex >= 3) break;
-            const s = flow[c.stepIndex];
-            const l = mkLine();
-            l.appendChild(mkSpan('prompt', s.label));
-            l.appendChild(mkSpan('', ' ' + (answers[s.key] ?? '')));
-            c.promptLineId = appendLine(l); // refresh ids (not strictly needed)
-          }
-          stepIndex = targetStepIndex;
-        } else {
-          // Phase 2
-          renderHeaderIfNeeded();
-          appendLine(mkLine());
-          // Print committed TO lines (and also FROM lines are implicit in header)
-          for (const c of completed) {
-            if (c.stepIndex < 3) continue;
-            if (c.answerKey === 'callsBack') {
-              // This is the callsBack prompt (after completion)
-              const fp = answers.fromPanel || '';
-              const fd = answers.fromDevice || '';
-              const ft = answers.fromTerminal || '';
-              const l = mkLine();
-              l.appendChild(mkSpan('prompt', `CALLS BACK TO ${fp} ${fd}/${ft}?`));
-              l.appendChild(mkSpan('', ' ' + (answers.callsBack ?? '')));
-              c.promptLineId = appendLine(l);
-            } else {
-              const s = flow[c.stepIndex];
-              const l = mkLine();
-              l.appendChild(mkSpan('prompt', s.label));
-              l.appendChild(mkSpan('', ' ' + (answers[s.key] ?? '')));
-              c.promptLineId = appendLine(l);
-            }
-          }
-          
-          // If we're at completion state, show header in titlebar
-          if (targetStepIndex >= flow.length) {
-            const panel = answers.toPanel || '';
-            const device = answers.toDevice || '';
-            const terminal = answers.toTerminal || '';
-            const headerEl = document.getElementById('main-header');
-            if (headerEl) {
-              headerEl.textContent = `(PANEL ${panel}) ${device}/${terminal}`;
-              headerEl.className = 'title header'; // Add header class for styling
-              updateHeaderColor();
-            }
-          }
-          stepIndex = targetStepIndex;
-        }
-
-        // Restore input with previous value if requested
-        if (restoreInput) {
-          if (stepIndex >= flow.length && answers.callsBack === undefined) {
-            // If we're showing the callsBack prompt, restore from callsBack
-            inputBuffer = answers.callsBack ?? '';
-          } else if (stepIndex < flow.length) {
-            inputBuffer = answers[flow[stepIndex]?.key] ?? '';
+        if (stackIdx !== -1) {
+          this.discoveryStack[stackIdx].count--;
+          if (this.discoveryStack[stackIdx].count <= 0) {
+            this.markHistoryComplete(this.discoveryStack[stackIdx]);
+            this.discoveryStack.splice(stackIdx, 1); // Remove completed
+            // appendLine(`<div style="color:var(--dim)">> ${this.currentFrom.t} COMPLETED</div>`);
           } else {
-            inputBuffer = '';
+            // appendLine(`<div style="color:var(--dim)">> ${this.currentFrom.t} PENDING (${this.discoveryStack[stackIdx].count})</div>`);
           }
+        }
+
+        // 4. Handle "To" Terminal
+        const toNode = {
+          p: this.inputs.toP,
+          d: this.inputs.toD,
+          t: this.inputs.toT,
+          count: toCount
+        };
+
+        if (toCount > 0) {
+          // Push To Node to Discovery Stack (Step E)
+          this.discoveryStack.push(toNode);
+
+          // Move forward: To becomes From
+          this.currentFrom = toNode;
+          this.startDestinationPhase();
         } else {
-          inputBuffer = '';
+          // Dead End (Step F)
+          // Circle Back
+          this.circleBack();
         }
+      },
 
-        // If stepIndex is "done", show callsBack prompt if not answered; otherwise active prompt
-        if (stepIndex >= flow.length) {
-          // Show callsBack prompt if not answered yet
-          if (answers.callsBack === undefined) {
-            renderActivePrompt();
-          }
+      circleBack() {
+        if (this.discoveryStack.length > 0) {
+          // Pull most recent from Active Discovery Stack
+          const nextSrc = this.discoveryStack[this.discoveryStack.length - 1]; // Peek/Get
+          this.currentFrom = nextSrc;
+
+          appendLine(`<div style="color:var(--accent)">↺ CIRCLING BACK TO: ${nextSrc.p} / ${nextSrc.d} / ${nextSrc.t} (${nextSrc.count} LEFT)</div>`);
+
+          this.startDestinationPhase();
         } else {
-          renderActivePrompt();
+          // Session Complete
+          this.phase = this.PHASE.COMPLETE;
+          setHeader('SESSION COMPLETE', 'green');
+          appendLine('<div style="color:var(--warn)">NO PENDING WIRES - TRACE COMPLETE</div>');
+          appendLine('<div class="prompt">TYPE "EXPORT" TO SAVE CSV</div>');
         }
-      };
+      },
 
-      // Update header color based on callback value
-      const updateHeaderColor = () => {
-        const headerEl = document.getElementById('main-header');
-        if (!headerEl) return;
-        
-        const callback = convertCallback(answers.callsBack);
-        headerEl.classList.remove('green', 'red');
-        
-        if (callback === '.') {
-          headerEl.classList.add('green');
-        } else if (callback === '!') {
-          headerEl.classList.add('red');
-        }
-      };
+      render() {
+        let label = '';
+        const P = this.PHASE;
 
-      // ----- Key handling -----
-      const isPrintableKey = (e) => {
-        if (e.ctrlKey || e.metaKey || e.altKey) return false;
-        return e.key.length === 1;
-      };
+        switch (this.phase) {
+          case P.SEED_PANEL: label = 'FROM PANEL?'; break;
+          case P.SEED_DEVICE: label = 'FROM DEVICE?'; break;
+          case P.SEED_TERMINAL: label = 'FROM TERMINAL?'; break;
 
-      const focus = () => ghost.focus({ preventScroll: true });
+          case P.DEST_PANEL:
+            label = `[FROM ${this.currentFrom.p}/${this.currentFrom.d}/${this.currentFrom.t}] TO PANEL?`; // Contextual prompt
+            break;
+          case P.DEST_DEVICE: label = 'TO DEVICE?'; break;
+          case P.DEST_TERMINAL: label = 'TO TERMINAL?'; break;
 
-      ghost.addEventListener('keydown', (e) => {
-        // keep focus & prevent browser shortcuts that would steal it
-        if (e.key === 'Tab') e.preventDefault();
+          case P.CALLBACK:
+            label = `CALLS BACK TO ${this.currentFrom.p}/${this.currentFrom.d}/${this.currentFrom.t}? (Y/N)`;
+            break;
 
-        if (e.key === 'Escape') {
-          e.preventDefault();
-          goBackOneStep();
-          return;
+          case P.DENSITY:
+            label = `BESIDES ${this.currentFrom.p}/${this.currentFrom.d}/${this.currentFrom.t}, HOW MANY WIRES ON ${this.inputs.toP}/${this.inputs.toD}/${this.inputs.toT}?`;
+            break;
+
+          case P.COMPLETE: label = 'COMPLETE (TYPE QUIT)'; break;
         }
 
-        // If finished but callsBack not answered, allow input for callsBack
-        if (stepIndex >= flow.length) {
-          if (answers.callsBack === undefined) {
-            // Allow input for callsBack prompt
-          } else {
-            e.preventDefault();
-            return;
-          }
-        }
+        if (label) renderInput(label);
+      }
+    };
 
-        if (e.key === 'Enter') {
-          e.preventDefault();
-          
-          // Check for "export" command
-          const lowerInput = inputBuffer.toLowerCase().trim();
-          if (lowerInput === 'export') {
-            const csv = generateCSV();
-            copyToClipboard(csv);
-            
-            // Show confirmation message
-            if (activeInputLineId) removeLineById(activeInputLineId);
-            const confirmLine = mkLine();
-            confirmLine.appendChild(mkSpan('meta', 'CSV copied to clipboard: '));
-            confirmLine.appendChild(mkSpan('prompt', csv + '\n'));
-            activeInputLineId = appendLine(confirmLine);
-            
-            inputBuffer = '';
-            // Re-render prompt
-            setTimeout(() => {
-              if (activeInputLineId) removeLineById(activeInputLineId);
-              activeInputLineId = null;
-              renderActivePrompt();
-            }, 500);
-            return;
-          }
-          
-          commitAnswer();
-          return;
-        }
+    // --- GLOBAL HANDLERS ---
 
-        if (e.key === 'Backspace') {
-          e.preventDefault();
-          inputBuffer = inputBuffer.slice(0, -1);
-          renderActivePrompt();
-          return;
-        }
+    function switchState(newState) {
+      currentState = newState;
+      if (newState === STATE_MENU) MenuTool.init();
+      if (newState === STATE_TRACE) TraceTool.init();
+    }
 
-        if (e.key === 'Delete') {
-          e.preventDefault();
-          // no-op for this simple terminal (could implement cursor later)
-          return;
-        }
+    function openNotepad() {
+      // Generate CSV from History
+      let content = '';
 
-        if (e.key === 'ArrowUp' || e.key === 'ArrowDown' || e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
-          e.preventDefault();
-          return;
-        }
+      if (currentState === STATE_TRACE && TraceTool.history.length > 0) {
+        // CSV Mapping:
+        // 2,3,4 = From P,D,T
+        // 8,9,10 = To P,D,T
+        // 12 = Status
+        // Note: Header color (callsBack) logic not explicitly mapped to a specific CSV column in 'Specification' table 
+        // EXCEPT "Header Color (Green = Y, Red = N)". Usually this assumes user manually handles it or it's logic.
+        // Wait, "Step A... Step F...". CSV Mapping table in prompt:
+        // A -> Cols 2,3,4. B -> Cols 8,9,10. D -> Col 12.
+        // It doesn't map 'Calls Back' to a column, just visual Header Color.
+        // Original code mapped it to near end. 
+        // Let's stick to the prompt's explicit mapping.
 
-        if (isPrintableKey(e)) {
-          e.preventDefault();
-          inputBuffer += e.key.toUpperCase();
-          renderActivePrompt();
-          return;
-        }
-      });
+        content = TraceTool.history.map(h => {
+          // WIR, FromP, FromD, FromT, , , , ToP, ToD, ToT, , Status, ,
+          //     2      3      4       5 6 7  8    9    10   11 12
+          return `WIR,${h.from.p},${h.from.d},${h.from.t},,,,${h.to.p},${h.to.d},${h.to.t},,${h.status},,`;
+        }).join('\n');
+      }
 
-      // Click anywhere to focus
-      terminal.addEventListener('mousedown', (e) => {
-        e.preventDefault();
-        focus();
-      });
-      frame.addEventListener('mousedown', (e) => {
-        e.preventDefault();
-        focus();
-      });
+      if (content) textArea.value = content;
 
-      // ----- Boot -----
-      renderIntro();
-      renderActivePrompt();
+      overlay.style.display = 'flex';
+      overlay.querySelector('.notepad-header span').textContent = 'Notepad';
+    }
+
+    function closeNotepad() {
+      overlay.style.display = 'none';
       focus();
-    })();
+    }
+
+    // Make global for onclick
+    window.closeNotepad = closeNotepad;
+
+    // --- EVENT LOOP ---
+    const focus = () => ghost.focus();
+    window.addEventListener('click', focus);
+
+    window.addEventListener('keydown', (e) => {
+      if (overlay.style.display === 'flex') return; // Typing in notepad handled natively
+      focus();
+
+      if (e.key === 'Enter') {
+        const rawCmd = inputBuffer.trim();
+        const cmd = rawCmd.toUpperCase();
+
+        // Push to History
+        if (rawCmd) {
+          commandHistory.push(rawCmd);
+          historyIndex = -1;
+          tempInputBuffer = '';
+        }
+
+        // Global Commands
+        if (cmd === 'QUIT') {
+          inputBuffer = '';
+          switchState(STATE_MENU);
+          return;
+        }
+        if (cmd === 'EXPORT' || cmd === 'TEXT' || cmd === 'CSV') {
+          inputBuffer = '';
+          openNotepad();
+          if (currentState === STATE_MENU) MenuTool.render();
+          if (currentState === STATE_TRACE) TraceTool.render();
+          return;
+        }
+
+        // Route to Tool
+        inputBuffer = '';
+        if (currentState === STATE_MENU) {
+          MenuTool.handleInput(cmd);
+        } else if (currentState === STATE_TRACE) {
+          TraceTool.handleInput(cmd);
+        }
+
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        if (currentState === STATE_TRACE) {
+          TraceTool.undo();
+        } else {
+          navigateHistory(-1);
+        }
+      } else if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        // Down behavior undefined so left as history or no-op
+        if (currentState === STATE_MENU) navigateHistory(1);
+      } else if (e.key === 'Backspace') {
+        inputBuffer = inputBuffer.slice(0, -1);
+        refreshUI();
+      } else if (e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        inputBuffer += e.key.toUpperCase();
+        refreshUI();
+      }
+    });
+
+    function refreshUI() {
+      if (currentState === STATE_MENU) MenuTool.render();
+      if (currentState === STATE_TRACE) TraceTool.render();
+    }
+
+    // --- NOTEPAD BUTTONS ---
+    btnCopy.addEventListener('click', async () => {
+      try {
+        await navigator.clipboard.writeText(textArea.value);
+        // Visual feedback?
+        const originalText = btnCopy.textContent;
+        btnCopy.textContent = 'COPIED!';
+        setTimeout(() => btnCopy.textContent = originalText, 1000);
+      } catch (err) {
+        console.error('Copy failed', err);
+      }
+    });
+
+    btnPaste.addEventListener('click', async () => {
+      try {
+        const text = await navigator.clipboard.readText();
+        // Insert at cursor position
+        const start = textArea.selectionStart;
+        const end = textArea.selectionEnd;
+        const val = textArea.value;
+        textArea.value = val.substring(0, start) + text + val.substring(end);
+        textArea.selectionStart = textArea.selectionEnd = start + text.length;
+        textArea.focus();
+      } catch (err) {
+        console.error('Paste failed', err);
+      }
+    });
+
+    // --- INIT ---
+    switchState(STATE_MENU);
   </script>
 </body>
+
 </html>
