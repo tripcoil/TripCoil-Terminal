@@ -489,11 +489,7 @@
             // Seed established. Initialize currentFrom.
             this.currentFrom = { p: this.inputs.p, d: this.inputs.d, t: this.inputs.t, count: 0 };
 
-            // Clean up the setup lines (From Panel, Device, Terminal)
-            removeLastLine();
-            removeLastLine();
-            removeLastLine();
-
+            // Note: startDestinationPhase() now handles clearing the screen
             this.startDestinationPhase();
             break;
 
@@ -528,6 +524,7 @@
             const hdrText = `(PANEL ${this.inputs.toP}) ${this.inputs.toD}/${this.inputs.toT}`;
             setHeader(hdrText, isYes ? 'green' : 'red');
 
+            clearTerminal(); // Clear before asking Density
             this.phase = P.DENSITY;
             break;
 
@@ -548,6 +545,7 @@
       },
 
       startDestinationPhase() {
+        clearTerminal(); // Clear history when starting a new leg
         this.inputs.toP = '';
         this.inputs.toD = '';
         this.inputs.toT = ''; // Clear destination buffer
