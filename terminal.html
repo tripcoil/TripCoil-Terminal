@@ -1,0 +1,754 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Mock Terminal Wizard</title>
+  <style>
+    :root{
+      --bg: #05080a;
+      --fg: #b8ffe1;
+      --dim: #67d7b3;
+      --accent: #19ff9a;
+      --warn: #ffd36a;
+      --shadow: rgba(25,255,154,.20);
+      --scan: rgba(25,255,154,.06);
+      --border: rgba(25,255,154,.20);
+    }
+    html,body{ height:100%; margin:0; background: radial-gradient(1200px 700px at 30% 20%, #071115 0%, var(--bg) 55%, #030506 100%); }
+    body{ display:flex; align-items:center; justify-content:center; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
+
+    .frame{
+      width:min(980px, 92vw);
+      height:min(620px, 86vh);
+      border-radius:18px;
+      border:1px solid var(--border);
+      box-shadow:
+        0 0 0 1px rgba(255,255,255,.03) inset,
+        0 20px 70px rgba(0,0,0,.65),
+        0 0 40px var(--shadow);
+      overflow:hidden;
+      position:relative;
+      background:
+        linear-gradient(180deg, rgba(255,255,255,.03), rgba(0,0,0,.06)),
+        radial-gradient(900px 420px at 70% 30%, rgba(25,255,154,.08), transparent 60%);
+    }
+
+    /* faux title bar */
+    .titlebar{
+      height:44px;
+      display:flex;
+      align-items:center;
+      padding:0 14px;
+      gap:10px;
+      border-bottom:1px solid rgba(255,255,255,.06);
+      background: linear-gradient(180deg, rgba(0,0,0,.35), rgba(0,0,0,.15));
+    }
+    .dots{ display:flex; gap:8px; }
+    .dot{ width:10px; height:10px; border-radius:999px; opacity:.85; }
+    .dot.red{ background:#ff5f57; }
+    .dot.yellow{ background:#febc2e; }
+    .dot.green{ background:#28c840; }
+    .title{
+      color:rgba(184,255,225,.8);
+      font-size:13px;
+      letter-spacing:.4px;
+      user-select:none;
+    }
+    .hint{
+      margin-left:auto;
+      color:rgba(184,255,225,.55);
+      font-size:12px;
+      user-select:none;
+    }
+    .hint kbd{
+      padding:.1rem .35rem;
+      border:1px solid rgba(184,255,225,.18);
+      border-bottom-color: rgba(184,255,225,.10);
+      border-radius:6px;
+      background: rgba(0,0,0,.25);
+      color:rgba(184,255,225,.75);
+      font-size:11px;
+    }
+
+    /* terminal surface */
+    .terminal{
+      position:absolute;
+      inset:44px 0 0 0;
+      padding:18px 18px 22px 18px;
+      color:var(--fg);
+      overflow:auto;
+      line-height:1.35;
+      font-size:15px;
+      text-shadow: 0 0 10px rgba(25,255,154,.12);
+    }
+
+    /* scanline / glow */
+    .terminal::before{
+      content:"";
+      position:absolute;
+      inset:0;
+      pointer-events:none;
+      background:
+        repeating-linear-gradient(
+          to bottom,
+          rgba(0,0,0,0) 0px,
+          rgba(0,0,0,0) 2px,
+          rgba(0,0,0,.06) 3px
+        );
+      mix-blend-mode: multiply;
+      opacity:.55;
+    }
+    .terminal::after{
+      content:"";
+      position:absolute;
+      inset:0;
+      pointer-events:none;
+      background: radial-gradient(900px 420px at 20% 0%, var(--scan), transparent 60%);
+      opacity:.9;
+    }
+
+    .content{
+      position:relative;
+      z-index:1;
+      white-space:pre-wrap;
+      word-break:break-word;
+    }
+
+    .line{ display:block; padding:1px 0; }
+    .prompt{
+      color:var(--accent);
+    }
+    .meta{
+      color:rgba(184,255,225,.68);
+    }
+    .header{
+      color:var(--warn);
+      font-weight:600;
+      letter-spacing:.2px;
+      margin-bottom:8px;
+    }
+    .header.green{
+      color:#28c840;
+    }
+    .header.red{
+      color:#ff5f57;
+    }
+
+    /* input row */
+    .input-row{
+      display:flex;
+      align-items:baseline;
+      gap:10px;
+      padding-top:8px;
+    }
+    .caret{
+      display:inline-block;
+      width:9px;
+      height:1.05em;
+      background: var(--accent);
+      box-shadow: 0 0 14px rgba(25,255,154,.55);
+      margin-left:2px;
+      transform: translateY(2px);
+      animation: blink 1s steps(1,end) infinite;
+    }
+    @keyframes blink{
+      50%{ opacity:0; }
+    }
+
+    .ghost-input{
+      position:absolute;
+      left:-9999px;
+      top:-9999px;
+      opacity:0;
+    }
+
+    /* subtle scrollbar */
+    .terminal::-webkit-scrollbar{ width:10px; }
+    .terminal::-webkit-scrollbar-thumb{
+      background: rgba(184,255,225,.10);
+      border: 1px solid rgba(184,255,225,.14);
+      border-radius: 10px;
+    }
+
+    .click-to-focus{
+      position:absolute;
+      inset:44px 0 0 0;
+      z-index:2;
+      pointer-events:none;
+    }
+  </style>
+</head>
+<body>
+  <div class="frame" id="frame">
+    <div class="titlebar">
+      <div class="title" id="main-header"></div>
+    </div>
+
+    <div class="terminal" id="terminal" aria-label="Mock terminal" role="application">
+      <div class="content" id="content"></div>
+      <input class="ghost-input" id="ghost" autocomplete="off" autocapitalize="off" spellcheck="false" />
+    </div>
+  </div>
+
+  <script>
+    (() => {
+      const content = document.getElementById('content');
+      const terminal = document.getElementById('terminal');
+      const ghost = document.getElementById('ghost');
+      const frame = document.getElementById('frame');
+
+      // ----- Flow definition -----
+      const flow = [
+        { key: 'fromPanel',    label: 'FROM PANEL?' },
+        { key: 'fromDevice',   label: 'FROM DEVICE?' },
+        { key: 'fromTerminal', label: 'FROM TERMINAL?' },
+
+        // after first 3: clear + header, then:
+        { key: 'toPanel',      label: 'TO PANEL?', dynamicLabel: true },
+        { key: 'toDevice',     label: 'TO DEVICE?' },
+        { key: 'toTerminal',   label: 'TO TERMINAL?' },
+      ];
+
+      const answers = {
+        fromPanel: '',
+        fromDevice: '',
+        fromTerminal: '',
+        toPanel: '',
+        toDevice: '',
+        toTerminal: '',
+        callsBack: undefined,
+      };
+
+      // Each committed step is a record so Esc can undo it cleanly
+      const commits = []; // { stepIndex, promptLineId, answerLineId, previousValue }
+
+      let stepIndex = 0;
+      let inputBuffer = '';
+      let headerShown = false;
+
+      // ----- Rendering helpers -----
+      const mkSpan = (cls, text) => {
+        const s = document.createElement('span');
+        if (cls) s.className = cls;
+        s.textContent = text;
+        return s;
+      };
+
+      const mkLine = (cls) => {
+        const d = document.createElement('div');
+        d.className = 'line' + (cls ? ` ${cls}` : '');
+        d.dataset.lineId = String(Math.random()).slice(2);
+        return d;
+      };
+
+      const appendLine = (lineEl) => {
+        content.appendChild(lineEl);
+        scrollToBottom();
+        return lineEl.dataset.lineId;
+      };
+
+      const findLineById = (id) => {
+        return content.querySelector(`[data-line-id="${CSS.escape(id)}"]`);
+      };
+
+      const removeLineById = (id) => {
+        const el = findLineById(id);
+        if (el) el.remove();
+      };
+
+      const clearScreen = () => {
+        content.innerHTML = '';
+      };
+
+      const scrollToBottom = () => {
+        // keep the "terminal" pinned to bottom
+        terminal.scrollTop = terminal.scrollHeight;
+      };
+
+      const buildHeaderText = () => {
+        // FROM PANEL [FROM PANEL] [FROM DEVICE]/[FROM TERMINAL]
+        const fp = answers.fromPanel || '';
+        const fd = answers.fromDevice || '';
+        const ft = answers.fromTerminal || '';
+        return `FROM PANEL ${fp} ${fd}/${ft}`;
+      };
+
+      const renderHeaderIfNeeded = () => {
+        if (headerShown) return;
+        const headerLine = mkLine('header');
+        headerLine.textContent = buildHeaderText();
+        appendLine(headerLine);
+        headerShown = true;
+      };
+
+      const renderIntro = () => {
+        // Intro removed
+      };
+
+      // Convert callback value to CSV format
+      const convertCallback = (val) => {
+        if (!val || val.trim() === '') return '?';
+        const upper = val.toUpperCase().trim();
+        if (upper === 'Y') return '.';
+        if (upper === 'N') return '!';
+        return '?';
+      };
+
+      // Generate CSV format
+      // Format: [FROMPANEL],[FROMDEVICE],[FROMTERMINAL],[CALLBACK],[TOPANEL],[TODEVICE],[TOTERMINAL]
+      // Example: 1,AA,A01,.,1,BB,01
+      const generateCSV = () => {
+        const fp = answers.fromPanel || '';
+        const fd = answers.fromDevice || '';
+        const ft = answers.fromTerminal || '';
+        const callback = convertCallback(answers.callsBack);
+        const tp = answers.toPanel || '';
+        const td = answers.toDevice || '';
+        const tt = answers.toTerminal || '';
+        
+        // Match example format exactly: all fields separated by commas
+        return `${fp},${fd},${ft},${callback},${tp},${td},${tt}`;
+      };
+
+      // Copy to clipboard
+      const copyToClipboard = async (text) => {
+        try {
+          await navigator.clipboard.writeText(text);
+          return true;
+        } catch (err) {
+          // Fallback for older browsers
+          const textArea = document.createElement('textarea');
+          textArea.value = text;
+          textArea.style.position = 'fixed';
+          textArea.style.left = '-999999px';
+          document.body.appendChild(textArea);
+          textArea.focus();
+          textArea.select();
+          try {
+            document.execCommand('copy');
+            document.body.removeChild(textArea);
+            return true;
+          } catch (err) {
+            document.body.removeChild(textArea);
+            return false;
+          }
+        }
+      };
+
+      // Render the active input row (single line) at bottom:
+      let activeInputLineId = null;
+
+      const renderActivePrompt = () => {
+        // Remove previous active input row (if any)
+        if (activeInputLineId) removeLineById(activeInputLineId);
+
+        // Check if we're in callsBack phase (after completion)
+        if (stepIndex >= flow.length && answers.callsBack === undefined) {
+          // Show callsBack prompt after yellow header
+          const line = mkLine();
+          line.classList.add('input-row');
+
+          const prompt = document.createElement('span');
+          prompt.className = 'prompt';
+          const fp = answers.fromPanel || '';
+          const fd = answers.fromDevice || '';
+          const ft = answers.fromTerminal || '';
+          prompt.textContent = `CALLS BACK TO ${fp} ${fd}/${ft}?`;
+
+          const input = document.createElement('span');
+          input.className = 'input';
+          input.textContent = ' ' + inputBuffer;
+
+          const caret = document.createElement('span');
+          caret.className = 'caret';
+
+          line.appendChild(prompt);
+          line.appendChild(input);
+          line.appendChild(caret);
+
+          activeInputLineId = appendLine(line);
+          return;
+        }
+
+        const step = flow[stepIndex];
+        const line = mkLine();
+        line.classList.add('input-row');
+
+        const prompt = document.createElement('span');
+        prompt.className = 'prompt';
+        prompt.textContent = step.label;
+
+        const input = document.createElement('span');
+        input.className = 'input';
+        input.textContent = ' ' + inputBuffer;
+
+        const caret = document.createElement('span');
+        caret.className = 'caret';
+
+        line.appendChild(prompt);
+        line.appendChild(input);
+        line.appendChild(caret);
+
+        activeInputLineId = appendLine(line);
+      };
+
+      const commitAnswer = () => {
+        // Handle callsBack prompt (after completion)
+        if (stepIndex >= flow.length && answers.callsBack === undefined) {
+          const val = inputBuffer.trim();
+          removeLineById(activeInputLineId);
+          activeInputLineId = null;
+
+          const fp = answers.fromPanel || '';
+          const fd = answers.fromDevice || '';
+          const ft = answers.fromTerminal || '';
+          const promptLabel = `CALLS BACK TO ${fp} ${fd}/${ft}?`;
+
+          const previousValue = answers.callsBack || '';
+          answers.callsBack = val;
+
+          const permanent = mkLine();
+          permanent.appendChild(mkSpan('prompt', promptLabel));
+          permanent.appendChild(mkSpan('', ' ' + val));
+          const promptLineId = appendLine(permanent);
+
+          commits.push({
+            stepIndex: flow.length, // Special stepIndex for callsBack
+            promptLineId,
+            answerLineId: null,
+            previousValue,
+            answerKey: 'callsBack'
+          });
+
+          inputBuffer = '';
+          
+          // Update header color based on callback
+          updateHeaderColor();
+          
+          // Stay in "done" state, no more prompts
+          return;
+        }
+
+        const step = flow[stepIndex];
+        const val = inputBuffer;
+
+        // Replace the active input row with a permanent prompt+answer line
+        // (so the line stays "up" after you press enter)
+        removeLineById(activeInputLineId);
+        activeInputLineId = null;
+
+        const previousValue = answers[step.key] || '';
+        answers[step.key] = val;
+
+        const permanent = mkLine();
+        permanent.appendChild(mkSpan('prompt', step.label));
+        permanent.appendChild(mkSpan('', ' ' + val));
+        const promptLineId = appendLine(permanent);
+
+        // record commit for Esc undo
+        commits.push({
+          stepIndex,
+          promptLineId,
+          answerLineId: null, // kept for future expansions, not needed currently
+          previousValue,
+          answerKey: step.key
+        });
+
+        inputBuffer = '';
+        stepIndex++;
+
+        // Phase transition after first 3
+        if (stepIndex === 3) {
+          // clear and show header + continue asking TO questions
+          clearScreen();
+          renderHeaderIfNeeded();
+          appendLine(mkLine()); // blank line under header
+        }
+
+        // If finished
+        if (stepIndex >= flow.length) {
+          // Clear terminal and show yellow header with last panel/device/terminal in titlebar
+          clearScreen();
+          headerShown = false;
+          
+          const panel = answers.toPanel || '';
+          const device = answers.toDevice || '';
+          const terminal = answers.toTerminal || '';
+          const headerEl = document.getElementById('main-header');
+          if (headerEl) {
+            headerEl.textContent = `(PANEL ${panel}) ${device}/${terminal}`;
+            headerEl.className = 'title header'; // Add header class for styling
+            updateHeaderColor();
+          }
+
+          // Show callsBack prompt next
+          stepIndex = flow.length; // "done" state but will show callsBack prompt
+          inputBuffer = '';
+          renderActivePrompt();
+          return;
+        }
+
+        renderActivePrompt();
+      };
+
+      const renderDonePrompt = () => {
+        // Show a minimal editable line in "done" state
+        if (activeInputLineId) removeLineById(activeInputLineId);
+
+        const line = mkLine();
+        line.classList.add('input-row');
+
+        const prompt = document.createElement('span');
+        prompt.className = 'prompt';
+        prompt.textContent = 'EDIT?';
+
+        const input = document.createElement('span');
+        input.textContent = ' (Esc to go back)';
+
+        line.appendChild(prompt);
+        line.appendChild(input);
+
+        activeInputLineId = appendLine(line);
+      };
+
+      const goBackOneStep = () => {
+        if (commits.length === 0) return;
+
+        // If we are in "done" state, remove the EDIT? prompt and any trailing lines added after completion
+        if (stepIndex >= flow.length) {
+          // remove the last active input line
+          if (activeInputLineId) removeLineById(activeInputLineId);
+          activeInputLineId = null;
+
+          // Soft-trim: remove lines until we hit the last committed prompt line (or content end)
+          // Easiest: clear and re-render the whole current phase based on commits.
+        }
+
+        // Pop last commit and revert
+        const last = commits.pop();
+        let revertedStepIndex = last.stepIndex;
+
+        if (last.answerKey === 'callsBack') {
+          answers.callsBack = last.previousValue;
+          // If we're going back from callsBack, go back to the completion state
+          revertedStepIndex = flow.length;
+        } else {
+          const step = flow[revertedStepIndex];
+          answers[step.key] = last.previousValue;
+        }
+
+        // Re-render entire terminal based on current progress (robust, simple)
+        rerenderFromState(revertedStepIndex, /*restoreInput*/ true);
+      };
+
+      const rerenderFromState = (targetStepIndex, restoreInput) => {
+        // Determine which phase we're in:
+        // stepIndex < 3 => before clear
+        // stepIndex >=3 => after clear/header
+        // We'll rebuild using commits up to (but not including) targetStepIndex as completed.
+        clearScreen();
+        activeInputLineId = null;
+
+        const completed = commits
+          .slice()
+          .sort((a,b) => a.stepIndex - b.stepIndex);
+
+        // Decide if header should be shown based on whether we have completed the first 3.
+        headerShown = false;
+
+        // If we're still in phase 1:
+        if (targetStepIndex < 3) {
+          renderIntro();
+          // Print committed phase-1 lines
+          for (const c of completed) {
+            if (c.stepIndex >= 3) break;
+            const s = flow[c.stepIndex];
+            const l = mkLine();
+            l.appendChild(mkSpan('prompt', s.label));
+            l.appendChild(mkSpan('', ' ' + (answers[s.key] ?? '')));
+            c.promptLineId = appendLine(l); // refresh ids (not strictly needed)
+          }
+          stepIndex = targetStepIndex;
+        } else {
+          // Phase 2
+          renderHeaderIfNeeded();
+          appendLine(mkLine());
+          // Print committed TO lines (and also FROM lines are implicit in header)
+          for (const c of completed) {
+            if (c.stepIndex < 3) continue;
+            if (c.answerKey === 'callsBack') {
+              // This is the callsBack prompt (after completion)
+              const fp = answers.fromPanel || '';
+              const fd = answers.fromDevice || '';
+              const ft = answers.fromTerminal || '';
+              const l = mkLine();
+              l.appendChild(mkSpan('prompt', `CALLS BACK TO ${fp} ${fd}/${ft}?`));
+              l.appendChild(mkSpan('', ' ' + (answers.callsBack ?? '')));
+              c.promptLineId = appendLine(l);
+            } else {
+              const s = flow[c.stepIndex];
+              const l = mkLine();
+              l.appendChild(mkSpan('prompt', s.label));
+              l.appendChild(mkSpan('', ' ' + (answers[s.key] ?? '')));
+              c.promptLineId = appendLine(l);
+            }
+          }
+          
+          // If we're at completion state, show header in titlebar
+          if (targetStepIndex >= flow.length) {
+            const panel = answers.toPanel || '';
+            const device = answers.toDevice || '';
+            const terminal = answers.toTerminal || '';
+            const headerEl = document.getElementById('main-header');
+            if (headerEl) {
+              headerEl.textContent = `(PANEL ${panel}) ${device}/${terminal}`;
+              headerEl.className = 'title header'; // Add header class for styling
+              updateHeaderColor();
+            }
+          }
+          stepIndex = targetStepIndex;
+        }
+
+        // Restore input with previous value if requested
+        if (restoreInput) {
+          if (stepIndex >= flow.length && answers.callsBack === undefined) {
+            // If we're showing the callsBack prompt, restore from callsBack
+            inputBuffer = answers.callsBack ?? '';
+          } else if (stepIndex < flow.length) {
+            inputBuffer = answers[flow[stepIndex]?.key] ?? '';
+          } else {
+            inputBuffer = '';
+          }
+        } else {
+          inputBuffer = '';
+        }
+
+        // If stepIndex is "done", show callsBack prompt if not answered; otherwise active prompt
+        if (stepIndex >= flow.length) {
+          // Show callsBack prompt if not answered yet
+          if (answers.callsBack === undefined) {
+            renderActivePrompt();
+          }
+        } else {
+          renderActivePrompt();
+        }
+      };
+
+      // Update header color based on callback value
+      const updateHeaderColor = () => {
+        const headerEl = document.getElementById('main-header');
+        if (!headerEl) return;
+        
+        const callback = convertCallback(answers.callsBack);
+        headerEl.classList.remove('green', 'red');
+        
+        if (callback === '.') {
+          headerEl.classList.add('green');
+        } else if (callback === '!') {
+          headerEl.classList.add('red');
+        }
+      };
+
+      // ----- Key handling -----
+      const isPrintableKey = (e) => {
+        if (e.ctrlKey || e.metaKey || e.altKey) return false;
+        return e.key.length === 1;
+      };
+
+      const focus = () => ghost.focus({ preventScroll: true });
+
+      ghost.addEventListener('keydown', (e) => {
+        // keep focus & prevent browser shortcuts that would steal it
+        if (e.key === 'Tab') e.preventDefault();
+
+        if (e.key === 'Escape') {
+          e.preventDefault();
+          goBackOneStep();
+          return;
+        }
+
+        // If finished but callsBack not answered, allow input for callsBack
+        if (stepIndex >= flow.length) {
+          if (answers.callsBack === undefined) {
+            // Allow input for callsBack prompt
+          } else {
+            e.preventDefault();
+            return;
+          }
+        }
+
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          
+          // Check for "export" command
+          const lowerInput = inputBuffer.toLowerCase().trim();
+          if (lowerInput === 'export') {
+            const csv = generateCSV();
+            copyToClipboard(csv);
+            
+            // Show confirmation message
+            if (activeInputLineId) removeLineById(activeInputLineId);
+            const confirmLine = mkLine();
+            confirmLine.appendChild(mkSpan('meta', 'CSV copied to clipboard: '));
+            confirmLine.appendChild(mkSpan('prompt', csv + '\n'));
+            activeInputLineId = appendLine(confirmLine);
+            
+            inputBuffer = '';
+            // Re-render prompt
+            setTimeout(() => {
+              if (activeInputLineId) removeLineById(activeInputLineId);
+              activeInputLineId = null;
+              renderActivePrompt();
+            }, 500);
+            return;
+          }
+          
+          commitAnswer();
+          return;
+        }
+
+        if (e.key === 'Backspace') {
+          e.preventDefault();
+          inputBuffer = inputBuffer.slice(0, -1);
+          renderActivePrompt();
+          return;
+        }
+
+        if (e.key === 'Delete') {
+          e.preventDefault();
+          // no-op for this simple terminal (could implement cursor later)
+          return;
+        }
+
+        if (e.key === 'ArrowUp' || e.key === 'ArrowDown' || e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+          e.preventDefault();
+          return;
+        }
+
+        if (isPrintableKey(e)) {
+          e.preventDefault();
+          inputBuffer += e.key.toUpperCase();
+          renderActivePrompt();
+          return;
+        }
+      });
+
+      // Click anywhere to focus
+      terminal.addEventListener('mousedown', (e) => {
+        e.preventDefault();
+        focus();
+      });
+      frame.addEventListener('mousedown', (e) => {
+        e.preventDefault();
+        focus();
+      });
+
+      // ----- Boot -----
+      renderIntro();
+      renderActivePrompt();
+      focus();
+    })();
+  </script>
+</body>
+</html>
