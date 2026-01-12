@@ -47,15 +47,24 @@
       height: 44px;
       display: flex;
       align-items: center;
+      justify-content: center;
+      /* Center header title */
       padding: 0 14px;
       background: rgba(0, 0, 0, 0.5);
       border-bottom: 1px solid var(--border);
     }
 
     .title {
-      color: var(--fg);
-      font-size: 13px;
-      opacity: 0.8;
+      color: #FF453A;
+      /* High-visibility Signal Red */
+      text-shadow: 0 0 8px rgba(255, 69, 58, 0.7);
+      /* Subtle glow */
+      font-size: 16px;
+      font-weight: bold;
+      font-family: inherit;
+      opacity: 1;
+      letter-spacing: 1px;
+      /* Improves legibility */
     }
 
     .header.green {
@@ -82,14 +91,24 @@
 
     .input-row {
       display: flex;
-      align-items: baseline;
+      align-items: center;
+      /* Fix for baseline jitter */
       gap: 10px;
       padding: 2px 0;
     }
 
+    .input-row.multi-line {
+      display: block;
+    }
+
     .input-group {
       display: inline-flex;
+      align-items: center;
+      /* Ensure caret and text align vertically */
       gap: 0;
+      min-height: 1.2em;
+      vertical-align: bottom;
+      /* Ensure height creates stability even if empty */
     }
 
     .caret {
@@ -227,6 +246,57 @@
       background: var(--accent);
       color: #000;
     }
+
+    /* Plotter Styles */
+    .plotter-overlay {
+      display: none;
+      position: absolute;
+      inset: 0;
+      background: #fff;
+      z-index: 100;
+      flex-direction: column;
+      color: #000;
+    }
+
+    .plotter-header {
+      height: 32px;
+      background: #eee;
+      border-bottom: 1px solid #ccc;
+      display: flex;
+      align-items: center;
+      padding-left: 10px;
+      font-family: sans-serif;
+      font-size: 12px;
+    }
+
+    .plotter-content {
+      flex: 1;
+      padding: 15px;
+      font-family: 'Consolas', monospace;
+      font-size: 12px;
+      border: none;
+      outline: none;
+      overflow: auto;
+      white-space: pre;
+      margin: 0;
+    }
+
+    /* Plotter Colors */
+    .ok {
+      color: #28a745;
+    }
+
+    .warn {
+      color: #fd7e14;
+    }
+
+    .bad {
+      color: #dc3545;
+    }
+
+    .muted {
+      color: #6c757d;
+    }
   </style>
 </head>
 
@@ -242,21 +312,58 @@
     </div>
 
     <div class="notepad-overlay" id="notepad-overlay">
-      <div class="notepad-header">
-        <span>TC-Export.txt - Notepad</span>
-        <div class="edit-menu">
-          <button class="cmd-btn" id="btn-copy">COPY</button>
-          <button class="cmd-btn" id="btn-paste">PASTE</button>
+      <div class="notepad-header" style="position: relative; justify-content: space-between;">
+        <!-- Left: Icon + Buttons -->
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <span style="font-size: 18px; margin-right: 5px;">📝</span>
+          <div class="edit-menu" style="margin-left: 0;">
+            <button class="cmd-btn" id="btn-copy">COPY</button>
+            <button class="cmd-btn" id="btn-paste">PASTE</button>
+          </div>
         </div>
-        <div class="notepad-close" onclick="closeNotepad()">✕</div>
+
+        <!-- Center: Title -->
+        <div
+          style="position: absolute; left: 50%; transform: translateX(-50%); font-weight: bold; font-size: 14px; text-transform: uppercase; text-shadow: 1px 1px 0 #fff, 2px 2px 2px rgba(0,0,0,0.2);">
+          DATA INTERFACE
+        </div>
+
+        <!-- Right: Close -->
+        <div class="notepad-close" onclick="closeNotepad()" style="margin-left: 0;">✕</div>
       </div>
       <textarea class="notepad-content" id="notepad-textarea"></textarea>
+    </div>
+
+    <div class="plotter-overlay" id="plotter-overlay">
+      <div class="plotter-header" style="position: relative; justify-content: space-between;">
+        <!-- Left: Icon + Buttons -->
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <span style="font-size: 18px; margin-right: 5px;">📝</span>
+          <div class="edit-menu" style="margin-left: 0;">
+            <button class="cmd-btn" id="btn-plot-copy">COPY</button>
+            <button class="cmd-btn" id="btn-plot-print">PRINT</button>
+          </div>
+        </div>
+
+        <!-- Center: Title -->
+        <div
+          style="position: absolute; left: 50%; transform: translateX(-50%); font-weight: bold; font-size: 14px; text-transform: uppercase; text-shadow: 1px 1px 0 #fff, 2px 2px 2px rgba(0,0,0,0.2);">
+          PLOTTER
+        </div>
+
+        <!-- Right: Close -->
+        <div class="notepad-close" onclick="closePlotter()" style="margin-left: 0;">✕</div>
+      </div>
+      <pre class="plotter-content" id="plotter-content"></pre>
     </div>
 
     <div class="mobile-controls">
       <div class="history-btn" id="btn-up">∧</div>
       <div class="history-btn" id="btn-down">∨</div>
     </div>
+
+    <!-- Hidden File Input for LOAD command -->
+    <input type="file" id="file-input" accept=".csv" style="display:none">
   </div>
 
   <script>
@@ -269,7 +376,17 @@
     const btnPaste = document.getElementById('btn-paste');
     const btnUp = document.getElementById('btn-up');
     const btnDown = document.getElementById('btn-down');
+
     const mainHeader = document.getElementById('main-header'); // Cached ref
+
+    // Plotter Refs
+    const plotterOverlay = document.getElementById('plotter-overlay');
+    const plotterContent = document.getElementById('plotter-content');
+    const btnPlotCopy = document.getElementById('btn-plot-copy');
+    const btnPlotPrint = document.getElementById('btn-plot-print');
+
+    // Load Ref
+    const fileInput = document.getElementById('file-input');
 
     // --- STATE MANAGEMENT ---
     const STATE_MENU = 'MENU';
@@ -311,17 +428,36 @@
       }
     }
 
-    function renderInput(prompt) {
+    function renderInput(prompt, isMultiLine = false) {
       let active = document.getElementById('active-row');
       if (active) active.remove();
 
       const row = document.createElement('div');
       row.id = 'active-row';
       row.className = 'input-row';
+      if (isMultiLine) row.classList.add('multi-line');
+
       // Using the robust .input-group fix
       row.innerHTML = `<span class="prompt">${prompt}</span> <span class="input-group"><span>${inputBuffer}</span><span class="caret"></span></span>`;
       content.appendChild(row);
       terminal.scrollTop = terminal.scrollHeight;
+    }
+
+    function commitInput(cmd) {
+      const active = document.getElementById('active-row');
+      const promptText = active ? active.querySelector('.prompt').innerHTML : '>';
+      // Instead of removing, we transform it into a static line (remove ID, remove caret)
+      if (active) {
+        active.removeAttribute('id');
+        const caret = active.querySelector('.caret');
+        if (caret) caret.remove();
+        // Or simply replace with static text to ensure cleanliness
+        // But matching exact plan:
+        // appendLine(`${promptText} <span>${cmd}</span>`);
+        // The plan said: "remove active, appendLine".
+        active.remove(); // Remove blinking one
+        appendLine(`${promptText} <span>${cmd}</span>`); // Add static one
+      }
     }
 
     // --- HISTORY LOGIC ---
@@ -370,26 +506,125 @@
       init() {
         clearTerminal();
         setHeader('TRIPCOIL TERMINAL V1.1');
-        appendLine('<span class="prompt">AVAILABLE PROGRAMS:</span>');
-        appendLine('&nbsp;&nbsp;1. TRACE TOOL');
-        appendLine('<br>'); // spacer
+        // Visual Layout
+        appendLine('----------------------------------------');
+        appendLine('<span class="prompt">AVAILABLE MODULES:</span>');
+        appendLine('&nbsp;&nbsp;1. TRACE TOOL (Active Verification)');
+        appendLine('<br>');
+        appendLine('<span class="prompt">AVAILABLE UTILITIES:</span>');
+        appendLine('&nbsp;&nbsp;2. PLOTTER (Generate Schematics)');
+        appendLine('&nbsp;&nbsp;3. DATA INTERFACE (Import/Export CSV)');
+        appendLine('&nbsp;&nbsp;4. SETTINGS');
+        appendLine('<br>');
+        appendLine('<span class="prompt">SYSTEM COMMANDS:</span>');
+        appendLine('&nbsp;&nbsp;HELP, QUIT, CLEAR');
+        appendLine('----------------------------------------');
         inputBuffer = '';
         this.render();
       },
-      handleInput(val) { // val is fully committed string OR we handle keystrokes? 
-        // Architecture decision: handle key logic globally, pass committed string here?
-        // Let's stick to global buffer, this handles the ACTION.
-        if (val === '1' || val === 'TRACE TOOL' || val === 'TRACE') {
+      handleInput(val) {
+        if (val === '1' || val === 'TRACE' || val === 'TRACE TOOL') {
           switchState(STATE_TRACE);
+        } else if (val === '2' || val === 'PLOTTER' || val === 'PLOT') {
+          Plotter.show();
+        } else if (val === '3' || val === 'DATA' || val === 'CSV' || val === 'EXPORT') {
+          openNotepad();
+        } else if (val === '4' || val === 'SETTINGS' || val === 'SET') {
+          appendLine(`<span class="warn">SETTINGS MODULE NOT LOADED</span>`);
         } else {
-          appendLine(`<span class="prompt">SELECT PROGRAM></span> <span>${val}</span>`);
           appendLine(`<span style="color:var(--warn)">INVALID SELECTION</span>`);
         }
       },
       render() {
-        renderInput('SELECT PROGRAM>');
+        renderInput('SELECT MODULE OR UTILITY>');
       }
     };
+
+
+    // --- PLOTTER TOOL ---
+    const Plotter = {
+      show() {
+        let csv = '';
+        if (currentState === STATE_TRACE && TraceTool.history.length > 0) {
+          csv = TraceTool.history.map(h => `WIR,${h.from.p},${h.from.d},${h.from.t},,,,${h.to.p},${h.to.d},${h.to.t},,${h.status}${h.callsBack === 'N' ? '!' : ''},,`).join('\n');
+        } else if (textArea.value.includes('WIR,')) {
+          // Fallback: try to read from notepad if it has data
+          csv = textArea.value;
+        }
+
+        if (!csv) {
+          plotterContent.innerHTML = '<span class="muted">No data to plot. Start a trace or export first.</span>';
+          plotterOverlay.style.display = 'flex';
+          return;
+        }
+
+        try {
+          const rows = this.parse(csv);
+          const graph = this.buildGraph(rows);
+          const html = this.renderTree(graph);
+          plotterContent.innerHTML = html;
+        } catch (e) {
+          console.error(e);
+          plotterContent.innerHTML = `<span class="bad">Error rendering plot: ${e.message}</span>`;
+        }
+        plotterOverlay.style.display = 'flex';
+      },
+      close() {
+        plotterOverlay.style.display = 'none';
+        focus();
+      },
+      parse(csv) {
+        // Auto-fix missing newlines for WIR rows (robustness for bad copy-paste)
+        const cleanCsv = csv.replace(/(\s)WIR,/g, '\nWIR,');
+        return cleanCsv.split('\n').map(l => l.trim().split(',')).filter(r => r[0] === 'WIR').map(c => ({
+          from: { p: c[1], d: c[2], t: c[3] }, to: { p: c[7], d: c[8], t: c[9] }, status: c[11]
+        }));
+      },
+      buildGraph(rows) {
+        const nodes = new Map();
+        const visited = new Set();
+        const k = (p, d, t) => `${p}|${d}|${t}`;
+        rows.forEach(r => {
+          const fk = k(r.from.p, r.from.d, r.from.t);
+          const tk = k(r.to.p, r.to.d, r.to.t);
+          if (!nodes.has(fk)) nodes.set(fk, { l: `${r.from.p}/${r.from.d}/${r.from.t}`, conns: [] });
+
+          let s = 'muted';
+          if (r.status === 'C' || r.status === '.') s = 'ok';
+          else if (r.status && r.status.includes('!')) s = 'bad';
+          else if (r.status && r.status.endsWith('?')) s = 'warn';
+
+          nodes.get(fk).conns.push({ k: tk, l: `${r.to.p}/${r.to.d}/${r.to.t}`, s: s });
+          visited.add(tk);
+        });
+        nodes.forEach(n => n.conns.sort((a, b) => a.l.localeCompare(b.l)));
+        const roots = [...nodes.keys()].filter(k => !visited.has(k));
+        return { nodes, roots };
+      },
+      renderTree({ nodes, roots }) {
+        let out = '';
+        const draw = (key, pfx, isRoot) => {
+          const n = nodes.get(key);
+          const lbl = n ? n.l : key.split('|').join('/');
+          let h = '';
+
+          if (isRoot) h += `${lbl}\n`;
+          if (!n) return h;
+
+          n.conns.forEach((c, i) => {
+            const last = i === n.conns.length - 1;
+            h += `${pfx}${last ? '└── ' : '├── '}<span class="${c.s}">${c.l}</span>\n`;
+            if (nodes.has(c.k)) {
+              h += draw(c.k, pfx + (last ? '    ' : '│   '), false);
+            }
+          });
+          return h;
+        };
+        roots.forEach(r => out += draw(r, '', true) + '\n');
+        return out || 'No roots found.';
+      }
+    };
+    window.closePlotter = () => Plotter.close();
 
     // --- TRACE TOOL PROGRAM (LOOP-BACK & BRANCH) ---
     const TraceTool = {
@@ -419,7 +654,7 @@
 
       init() {
         clearTerminal();
-        setHeader('TRACE TOOL - LOOP-BACK BRANCH MODE');
+        setHeader(''); // Initially blank as requested
         this.discoveryStack = [];
         this.history = [];
         this.undoStack = [];
@@ -474,12 +709,14 @@
           case P.SEED_PANEL:
             this.inputs.p = val;
             appendLine(`<span class="prompt">FROM PANEL:</span> <span>${val}</span>`);
+            setHeader(`📍    ${this.inputs.p}    📍`);
             this.phase = P.SEED_DEVICE;
             break;
 
           case P.SEED_DEVICE:
             this.inputs.d = val;
             appendLine(`<span class="prompt">FROM DEVICE:</span> <span>${val}</span>`);
+            setHeader(`📍    ${this.inputs.p} ${this.inputs.d}    📍`);
             this.phase = P.SEED_TERMINAL;
             break;
 
@@ -487,6 +724,9 @@
             this.inputs.t = val;
             appendLine(`<span class="prompt">FROM TERMINAL:</span> <span>${val}</span>`);
             // Seed established. Initialize currentFrom.
+            // Update Header to full Seed
+            setHeader(`📍    ${this.inputs.p} ${this.inputs.d} ${this.inputs.t}    📍`);
+
             this.currentFrom = { p: this.inputs.p, d: this.inputs.d, t: this.inputs.t, count: 0 };
 
             // Note: startDestinationPhase() now handles clearing the screen
@@ -509,6 +749,11 @@
           case P.DEST_TERMINAL:
             this.inputs.toT = val;
             appendLine(`<span class="prompt">TO TERMINAL:</span> <span>${val}</span>`);
+
+            // Immediate Transition: Update Header & Clear Screen
+            setHeader(`📍    ${this.inputs.toP} ${this.inputs.toD} ${this.inputs.toT}    📍`);
+            clearTerminal();
+
             this.phase = P.CALLBACK;
             break;
 
@@ -518,11 +763,13 @@
             const isYes = norm.startsWith('Y');
             this.inputs.callsBack = isYes ? 'Y' : 'N';
 
-            appendLine(`<span class="prompt">CALLS BACK TO ${this.currentFrom.p}/${this.currentFrom.d}/${this.currentFrom.t}?</span> <span>${this.inputs.callsBack}</span>`);
+            appendLine(`<span class="prompt">FOUND WIRE ${this.currentFrom.p}/${this.currentFrom.d}/${this.currentFrom.t}?</span> <span>${this.inputs.callsBack}</span>`);
 
-            // Update Header Color
-            const hdrText = `(PANEL ${this.inputs.toP}) ${this.inputs.toD}/${this.inputs.toT}`;
-            setHeader(hdrText, isYes ? 'green' : 'red');
+            // Update Header Color (Temporary for Callback Check)
+            // User requested header remains static with FROM loc until TO TERM entered.
+            // But this is the check step. Maybe we keep the static header or show the check?
+            // Header updated in DEST_TERMINAL now.
+            // setHeader(`📍    ${this.inputs.toP} ${this.inputs.toD} ${this.inputs.toT}    📍`);
 
             clearTerminal(); // Clear before asking Density
             this.phase = P.DENSITY;
@@ -564,6 +811,7 @@
 
       processJump(toCount) {
         // 1. Determine Status (Column 12)
+        // Default: If count > 0, it's pending ("Count?"). If 0, it's Complete ("C").
         const status = toCount > 0 ? `${toCount}?` : 'C';
 
         // 2. Record WIR Row
@@ -609,6 +857,10 @@
 
           // Move forward: To becomes From
           this.currentFrom = toNode;
+
+          // UPDATE HEADER NOW (Jump Confirmed)
+          setHeader(`📍    ${this.currentFrom.p} ${this.currentFrom.d} ${this.currentFrom.t}    📍`);
+
           this.startDestinationPhase();
         } else {
           // Dead End (Step F)
@@ -622,6 +874,9 @@
           // Pull most recent from Active Discovery Stack
           const nextSrc = this.discoveryStack[this.discoveryStack.length - 1]; // Peek/Get
           this.currentFrom = nextSrc;
+
+          // Update Header on Circle Back
+          setHeader(`📍    ${this.currentFrom.p} ${this.currentFrom.d} ${this.currentFrom.t}    📍`);
 
           appendLine(`<div style="color:var(--accent)">↺ CIRCLING BACK TO: ${nextSrc.p} / ${nextSrc.d} / ${nextSrc.t} (${nextSrc.count} LEFT)</div>`);
 
@@ -645,26 +900,24 @@
           case P.SEED_TERMINAL: label = 'FROM TERMINAL?'; break;
 
           case P.DEST_PANEL:
-            {
-              const loc = `${this.currentFrom.p}/${this.currentFrom.d}/${this.currentFrom.t}`;
-              label = `<span style="color:#00e5ff; font-weight:bold">AT ${loc}</span> TO PANEL?`;
-            }
+            // "Take out the blue text that says FROM: ..."
+            label = 'TO PANEL:';
             break;
           case P.DEST_DEVICE: label = 'TO DEVICE?'; break;
           case P.DEST_TERMINAL: label = 'TO TERMINAL?'; break;
 
           case P.CALLBACK:
-            label = `CALLS BACK TO ${this.currentFrom.p}/${this.currentFrom.d}/${this.currentFrom.t}? (Y/N)`;
+            label = `FOUND WIRE ${this.currentFrom.p}/${this.currentFrom.d}/${this.currentFrom.t}? (Y/N)`;
             break;
 
           case P.DENSITY:
-            label = `BESIDES ${this.currentFrom.p}/${this.currentFrom.d}/${this.currentFrom.t}, HOW MANY WIRES ON ${this.inputs.toP}/${this.inputs.toD}/${this.inputs.toT}?`;
+            label = `<i>EXCLUDING ${this.currentFrom.p}/${this.currentFrom.d}/${this.currentFrom.t}...</i><br>HOW MANY WIRES ON<br>${this.inputs.toP}/${this.inputs.toD}/${this.inputs.toT}?`;
             break;
 
           case P.COMPLETE: label = 'COMPLETE (TYPE QUIT)'; break;
         }
 
-        if (label) renderInput(label);
+        if (label) renderInput(label, this.phase === P.DENSITY);
       }
     };
 
@@ -674,6 +927,17 @@
       currentState = newState;
       if (newState === STATE_MENU) MenuTool.init();
       if (newState === STATE_TRACE) TraceTool.init();
+    }
+
+    function showHelp() {
+      appendLine('<div style="color:var(--dim)">--- TERMINAL CHEATSHEET ---</div>');
+      appendLine('<div><span class="prompt">NAVIGATION:</span> Up/Down Arrow for Command History</div>');
+      appendLine('<div><span class="prompt">MOBILE:</span> Use virtual buttons (∧/∨) for history/undo</div>');
+      appendLine('<div><span class="prompt">DATA:</span> TYPE "CSV" (or EXPORT) for Data Interface</div>');
+      appendLine('<div><span class="prompt">PLOT:</span> TYPE "PLOT" (or PLOTTER) for Wiring Diagram</div>');
+      appendLine('<div><span class="prompt">FILE:</span> SAVE (Download CSV), LOAD (Open CSV)</div>');
+      appendLine('<div><span class="prompt">SYSTEM:</span> CLEAR, QUIT (or EXIT), HELP</div>');
+      appendLine('<div style="color:var(--dim)">---------------------------</div>');
     }
 
     function openNotepad() {
@@ -694,16 +958,15 @@
         // Let's stick to the prompt's explicit mapping.
 
         content = TraceTool.history.map(h => {
-          // WIR, FromP, FromD, FromT, , , , ToP, ToD, ToT, , Status, ,
-          //     2      3      4       5 6 7  8    9    10   11 12
-          return `WIR,${h.from.p},${h.from.d},${h.from.t},,,,${h.to.p},${h.to.d},${h.to.t},,${h.status},,`;
+          const status = h.status + (h.callsBack === 'N' ? '!' : '');
+          return `WIR,${h.from.p},${h.from.d},${h.from.t},,,,${h.to.p},${h.to.d},${h.to.t},,${status},,`;
         }).join('\n');
       }
 
       if (content) textArea.value = content;
 
       overlay.style.display = 'flex';
-      overlay.querySelector('.notepad-header span').textContent = 'Notepad';
+      // overlay.querySelector('.notepad-header span').textContent = 'Notepad';
     }
 
     function closeNotepad() {
@@ -734,9 +997,23 @@
         }
 
         // Global Commands
-        if (cmd === 'QUIT') {
+        if (cmd === 'QUIT' || cmd === 'EXIT') {
           inputBuffer = '';
           switchState(STATE_MENU);
+          return;
+        }
+        if (cmd === 'CLEAR' || cmd === 'CLS') {
+          inputBuffer = '';
+          clearTerminal();
+          refreshUI(); // Re-render prompt
+          return;
+        }
+        if (cmd === 'HELP' || cmd === '?') {
+          inputBuffer = '';
+          showHelp();
+          // We don't return here because we want to stay in current state, just showed help.
+          // Actually showHelp appends lines. We should probably re-render prompt.
+          refreshUI();
           return;
         }
         if (cmd === 'EXPORT' || cmd === 'TEXT' || cmd === 'CSV') {
@@ -747,6 +1024,32 @@
           return;
         }
 
+        if (cmd === 'PLOT' || cmd === 'PLOTTER') {
+          inputBuffer = '';
+          Plotter.show();
+          return;
+        }
+
+        if (cmd === 'SAVE') {
+          commitInput('SAVE');
+          inputBuffer = '';
+          saveCSV();
+          refreshUI();
+          return;
+        }
+
+        if (cmd === 'LOAD') {
+          commitInput('LOAD');
+          inputBuffer = '';
+          fileInput.click();
+          // We don't refreshUI here immediately because the file dialog blocks, 
+          // and we want to wait for file selection or cancel.
+          // IF user cancels, we might need a way to restore prompt?
+          // For now, let's at least refreshUI so the prompt returns if they cancel.
+          refreshUI();
+          return;
+        }
+
         // Route to Tool
         inputBuffer = '';
         if (currentState === STATE_MENU) {
@@ -754,6 +1057,8 @@
         } else if (currentState === STATE_TRACE) {
           TraceTool.handleInput(cmd);
         }
+
+        refreshUI();
 
       } else if (e.key === 'ArrowUp') {
         e.preventDefault();
@@ -795,17 +1100,104 @@
 
     btnPaste.addEventListener('click', async () => {
       try {
-        const text = await navigator.clipboard.readText();
-        // Insert at cursor position
-        const start = textArea.selectionStart;
-        const end = textArea.selectionEnd;
-        const val = textArea.value;
-        textArea.value = val.substring(0, start) + text + val.substring(end);
-        textArea.selectionStart = textArea.selectionEnd = start + text.length;
+        let text = await navigator.clipboard.readText();
+        // Heuristic: Auto-format collapsed "Space WIR," into Newlines
+        text = text.replace(/(\s)WIR,/g, '\nWIR,');
+
+        // Overwrite usage
+        textArea.value = text;
         textArea.focus();
       } catch (err) {
         console.error('Paste failed', err);
       }
+    });
+
+    // --- PLOTTER EVENTS ---
+    btnPlotCopy.addEventListener('click', async () => {
+      try {
+        await navigator.clipboard.writeText(plotterContent.innerText);
+        const originalText = btnPlotCopy.textContent;
+        btnPlotCopy.textContent = 'COPIED!';
+        setTimeout(() => btnPlotCopy.textContent = originalText, 1000);
+      } catch (err) {
+        console.error('Copy failed', err);
+      }
+    });
+
+    btnPlotPrint.addEventListener('click', () => {
+      const printWindow = window.open('', '', 'width=800,height=600');
+      printWindow.document.write('<html><head><title>Wiring Diagram</title>');
+      printWindow.document.write('<style>body{font-family:Consolas,monospace;white-space:pre;font-size:12px;}</style>');
+      printWindow.document.write('</head><body>');
+      printWindow.document.write(plotterContent.innerHTML); // Preserves colors? Colors need classes.
+      // We need to inject the styles too if we want colors. 
+      // User asked for "clean .txt". Colors might consume ink. 
+      // If clean .txt means "black and white", I strip tags. 
+      // But usually "print" implies WYSIWYG. 
+      // Let's print clean TEXT (no colors) as "clean .txt" implies plainness.
+      // Actually, keeping structure is key. 
+      // Let's enable colors but keep it minimal.
+      // Re-injecting simple styles.
+      printWindow.document.write('<style>.ok{color:black}.warn{color:black}.bad{color:black}.muted{color:gray}</style>');
+      // Wait, user might want color. "Clean .txt" implies structure. 
+      // Let's strip the HTML tags for TRUE text print? 
+      // No, then we lose the bolding/dimming useful for readability.
+      // I will provide a black-and-white cleaned version.
+      printWindow.document.write('</body></html>');
+      printWindow.document.close();
+      printWindow.focus();
+      printWindow.print();
+      printWindow.close();
+    });
+
+    // --- FILE OPERATIONS ---
+    function saveCSV() {
+      let csv = '';
+      if (currentState === STATE_TRACE && TraceTool.history.length > 0) {
+        // Generate CSV from history if active trace exists
+        csv = TraceTool.history.map(h => {
+          const status = h.status + (h.callsBack === 'N' ? '!' : '');
+          return `WIR,${h.from.p},${h.from.d},${h.from.t},,,,${h.to.p},${h.to.d},${h.to.t},,${status},,`;
+        }).join('\n');
+      } else {
+        // Otherwise use Notepad content
+        csv = textArea.value;
+      }
+
+      if (!csv) {
+        appendLine('<span class="warn">NO DATA TO SAVE</span>');
+        return;
+      }
+
+      const blob = new Blob([csv], { type: 'text/csv' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'TC-Export.csv';
+      a.click();
+      URL.revokeObjectURL(url);
+      appendLine('<span class="ok">FILE SAVED: TC-Export.csv</span>');
+    }
+
+    fileInput.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const content = event.target.result;
+        // Auto-fix for space WIR if needed, similar to paste
+        const fixedContent = content.replace(/(\s)WIR,/g, '\nWIR,');
+
+        textArea.value = fixedContent;
+        appendLine(`<span class="ok">FILE LOADED: ${file.name}</span>`);
+
+        // Clear input so same file can be loaded again if needed
+        fileInput.value = '';
+
+        refreshUI(); // Ensure fresh prompt appears
+      };
+      reader.readAsText(file);
     });
 
     // --- INIT ---
