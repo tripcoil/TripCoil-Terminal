@@ -12,9 +12,14 @@
       --dim: #67d7b3;
       --accent: #19ff9a;
       --warn: #ffd36a;
+      --error: #ff5f57;
+      --success: #28c840;
       --shadow: rgba(25, 255, 154, .20);
-      --scan: rgba(25, 255, 154, .06);
       --border: rgba(25, 255, 154, .20);
+    }
+
+    * {
+      box-sizing: border-box;
     }
 
     html,
@@ -48,7 +53,6 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      /* Center header title */
       padding: 0 14px;
       background: rgba(0, 0, 0, 0.5);
       border-bottom: 1px solid var(--border);
@@ -56,25 +60,22 @@
 
     .title {
       color: #FF453A;
-      /* High-visibility Signal Red */
       text-shadow: 0 0 8px rgba(255, 69, 58, 0.7);
-      /* Subtle glow */
       font-size: 16px;
       font-weight: bold;
-      font-family: inherit;
       opacity: 1;
       letter-spacing: 1px;
-      /* Improves legibility */
+      transition: all 0.3s ease;
     }
 
-    .header.green {
-      color: #28c840;
-      font-weight: bold;
+    .title.success {
+      color: var(--success);
+      text-shadow: 0 0 8px rgba(40, 200, 64, 0.7);
     }
 
-    .header.red {
-      color: #ff5f57;
-      font-weight: bold;
+    .title.error {
+      color: var(--error);
+      text-shadow: 0 0 8px rgba(255, 95, 87, 0.7);
     }
 
     .terminal {
@@ -83,35 +84,41 @@
       padding: 20px;
       color: var(--fg);
       overflow-y: auto;
+      line-height: 1.6;
+    }
+
+    .terminal::-webkit-scrollbar {
+      width: 8px;
+    }
+
+    .terminal::-webkit-scrollbar-track {
+      background: rgba(0, 0, 0, 0.3);
+    }
+
+    .terminal::-webkit-scrollbar-thumb {
+      background: var(--dim);
+      border-radius: 4px;
     }
 
     .prompt {
       color: var(--accent);
+      font-weight: 600;
     }
 
     .input-row {
       display: flex;
       align-items: flex-end;
-      /* Align input with bottom of text */
       flex-wrap: wrap;
-      /* Allow wrapping for multi-line prompts */
-      /* Fix for baseline jitter */
       gap: 10px;
       padding: 2px 0;
-    }
-
-    .input-row.multi-line {
-      display: block;
     }
 
     .input-group {
       display: inline-flex;
       align-items: center;
-      /* Ensure caret and text align vertically */
       gap: 0;
       min-height: 1.2em;
       vertical-align: bottom;
-      /* Ensure height creates stability even if empty */
     }
 
     .caret {
@@ -121,6 +128,7 @@
       background: var(--accent);
       animation: blink 1s infinite;
       vertical-align: middle;
+      margin-left: 2px;
     }
 
     @keyframes blink {
@@ -129,7 +137,6 @@
       }
     }
 
-    /* Fix for Safari/Brave focus */
     .ghost-input {
       position: fixed;
       top: 0;
@@ -142,7 +149,7 @@
       z-index: -1;
     }
 
-    .notepad-overlay {
+    .overlay {
       display: none;
       position: absolute;
       inset: 0;
@@ -152,68 +159,85 @@
       color: #000;
     }
 
-    .notepad-header {
-      height: 32px;
-      background: #eee;
+    .overlay-header {
+      height: 40px;
+      background: linear-gradient(180deg, #f5f5f5 0%, #e8e8e8 100%);
       border-bottom: 1px solid #ccc;
       display: flex;
       align-items: center;
-      padding-left: 10px;
-      font-family: sans-serif;
+      padding: 0 12px;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       font-size: 12px;
+      justify-content: space-between;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
     }
 
-    .notepad-close {
-      margin-left: auto;
-      width: 45px;
-      height: 32px;
+    .overlay-close {
+      width: 40px;
+      height: 40px;
       display: flex;
       align-items: center;
       justify-content: center;
       cursor: pointer;
+      font-size: 18px;
+      color: #666;
+      transition: all 0.2s;
+      border-radius: 4px;
     }
 
-    .notepad-close:hover {
+    .overlay-close:hover {
       background: #e81123;
       color: #fff;
     }
 
-    .notepad-content {
+    .overlay-content {
       flex: 1;
       padding: 15px;
-      font-family: 'Consolas', monospace;
-      font-size: 14px;
+      font-family: 'Consolas', 'Courier New', monospace;
+      font-size: 13px;
       border: none;
       outline: none;
       resize: none;
+      overflow: auto;
+      white-space: pre;
+      margin: 0;
+      line-height: 1.5;
     }
 
-    .edit-menu {
+    textarea.overlay-content {
+      background: #fafafa;
+    }
+
+    .toolbar {
       display: flex;
-      gap: 8px;
-      margin-left: 15px;
+      gap: 6px;
+      align-items: center;
     }
 
-    .cmd-btn {
-      background: #e0e0e0;
-      border: 1px solid #b0b0b0;
-      padding: 2px 8px;
+    .btn {
+      background: linear-gradient(180deg, #fff 0%, #e8e8e8 100%);
+      border: 1px solid #adadad;
+      padding: 4px 12px;
       font-size: 11px;
       cursor: pointer;
-      font-family: sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       color: #333;
+      border-radius: 3px;
+      font-weight: 500;
+      transition: all 0.15s;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
     }
 
-    .cmd-btn:hover {
-      background: #d0d0d0;
+    .btn:hover {
+      background: linear-gradient(180deg, #f8f8f8 0%, #d8d8d8 100%);
       border-color: #999;
     }
 
-    .cmd-btn:active {
-      background: #ccc;
+    .btn:active {
+      background: #d0d0d0;
+      box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.1);
     }
 
-    /* Mobile Controls */
     .mobile-controls {
       position: fixed;
       bottom: 20px;
@@ -223,6 +247,7 @@
       gap: 10px;
       z-index: 50;
       opacity: 0.6;
+      transition: opacity 0.3s;
     }
 
     .mobile-controls:hover {
@@ -230,10 +255,10 @@
     }
 
     .history-btn {
-      width: 40px;
-      height: 40px;
-      background: rgba(255, 255, 255, 0.1);
-      border: 1px solid var(--accent);
+      width: 44px;
+      height: 44px;
+      background: rgba(25, 255, 154, 0.1);
+      border: 2px solid var(--accent);
       color: var(--accent);
       font-size: 20px;
       border-radius: 50%;
@@ -242,63 +267,63 @@
       align-items: center;
       justify-content: center;
       user-select: none;
-      backdrop-filter: blur(2px);
+      backdrop-filter: blur(4px);
+      transition: all 0.2s;
+      font-weight: bold;
+    }
+
+    .history-btn:hover {
+      background: rgba(25, 255, 154, 0.2);
+      transform: scale(1.05);
     }
 
     .history-btn:active {
       background: var(--accent);
       color: #000;
+      transform: scale(0.95);
     }
 
-    /* Plotter Styles */
-    .plotter-overlay {
-      display: none;
-      position: absolute;
-      inset: 0;
-      background: #fff;
-      z-index: 100;
-      flex-direction: column;
-      color: #000;
-    }
-
-    .plotter-header {
-      height: 32px;
-      background: #eee;
-      border-bottom: 1px solid #ccc;
-      display: flex;
-      align-items: center;
-      padding-left: 10px;
-      font-family: sans-serif;
-      font-size: 12px;
-    }
-
-    .plotter-content {
-      flex: 1;
-      padding: 15px;
-      font-family: 'Consolas', monospace;
-      font-size: 12px;
-      border: none;
-      outline: none;
-      overflow: auto;
-      white-space: pre;
-      margin: 0;
-    }
-
-    /* Plotter Colors */
+    /* Status Colors */
     .ok {
       color: #28a745;
+      font-weight: 600;
     }
 
     .warn {
       color: #fd7e14;
+      font-weight: 600;
     }
 
-    .bad {
+    .error {
       color: #dc3545;
+      font-weight: 600;
     }
 
     .muted {
       color: #6c757d;
+    }
+
+    .success {
+      color: var(--success);
+      font-weight: 600;
+    }
+
+    .info {
+      color: var(--accent);
+    }
+
+    /* Print-specific styles */
+    @media print {
+      .overlay-header,
+      .btn,
+      .overlay-close {
+        display: none !important;
+      }
+
+      .overlay-content {
+        padding: 0;
+        font-size: 10pt;
+      }
     }
   </style>
 </head>
@@ -310,265 +335,966 @@
     </div>
     <div class="terminal" id="terminal">
       <div id="content"></div>
-      <input class="ghost-input" id="ghost" type="text" autocomplete="off" spellcheck="false" inputmode="email"
+      <input class="ghost-input" id="ghost" type="text" autocomplete="off" spellcheck="false" inputmode="text"
         autofocus>
     </div>
 
-    <div class="notepad-overlay" id="notepad-overlay">
-      <div class="notepad-header" style="position: relative; justify-content: space-between;">
-        <!-- Left: Icon + Buttons -->
-        <div style="display: flex; align-items: center; gap: 10px;">
+    <!-- CSV Overlay -->
+    <div class="overlay" id="csv-overlay">
+      <div class="overlay-header">
+        <div class="toolbar">
           <span style="font-size: 18px; margin-right: 5px;">📝</span>
-          <div class="edit-menu" style="margin-left: 0;">
-            <button class="cmd-btn" id="btn-copy">COPY</button>
-            <button class="cmd-btn" id="btn-paste">PASTE</button>
-          </div>
+          <button class="btn" id="btn-copy" title="Copy to clipboard">COPY</button>
+          <button class="btn" id="btn-paste" title="Paste from clipboard">PASTE</button>
+          <button class="btn" id="btn-save" title="Save CSV file">SAVE</button>
+          <button class="btn" id="btn-load" title="Load CSV file">LOAD</button>
         </div>
-
-        <!-- Center: Title -->
-        <div
-          style="position: absolute; left: 50%; transform: translateX(-50%); font-weight: bold; font-size: 14px; text-transform: uppercase; text-shadow: 1px 1px 0 #fff, 2px 2px 2px rgba(0,0,0,0.2);">
+        <div style="position: absolute; left: 50%; transform: translateX(-50%); font-weight: 600; font-size: 13px;">
           DATA INTERFACE
         </div>
-
-        <!-- Right: Close -->
-        <div class="notepad-close" onclick="closeNotepad()" style="margin-left: 0;">✕</div>
+        <div class="overlay-close" id="csv-close">✕</div>
       </div>
-      <textarea class="notepad-content" id="notepad-textarea"></textarea>
+      <textarea class="overlay-content" id="csv-textarea" placeholder="Paste CSV data here or load a file..."></textarea>
     </div>
 
-    <div class="plotter-overlay" id="plotter-overlay">
-      <div class="plotter-header" style="position: relative; justify-content: space-between;">
-        <!-- Left: Icon + Buttons -->
-        <div style="display: flex; align-items: center; gap: 10px;">
-          <span style="font-size: 18px; margin-right: 5px;">📝</span>
-          <div class="edit-menu" style="margin-left: 0;">
-            <button class="cmd-btn" id="btn-plot-copy">COPY</button>
-            <button class="cmd-btn" id="btn-plot-print">PRINT</button>
-          </div>
+    <!-- Plotter Overlay -->
+    <div class="overlay" id="plotter-overlay">
+      <div class="overlay-header">
+        <div class="toolbar">
+          <span style="font-size: 18px; margin-right: 5px;">📊</span>
+          <button class="btn" id="btn-plot-copy" title="Copy diagram">COPY</button>
+          <button class="btn" id="btn-plot-print" title="Print diagram">PRINT</button>
         </div>
-
-        <!-- Center: Title -->
-        <div
-          style="position: absolute; left: 50%; transform: translateX(-50%); font-weight: bold; font-size: 14px; text-transform: uppercase; text-shadow: 1px 1px 0 #fff, 2px 2px 2px rgba(0,0,0,0.2);">
-          PLOTTER
+        <div style="position: absolute; left: 50%; transform: translateX(-50%); font-weight: 600; font-size: 13px;">
+          WIRING DIAGRAM
         </div>
-
-        <!-- Right: Close -->
-        <div class="notepad-close" onclick="closePlotter()" style="margin-left: 0;">✕</div>
+        <div class="overlay-close" id="plotter-close">✕</div>
       </div>
-      <pre class="plotter-content" id="plotter-content"></pre>
+      <pre class="overlay-content" id="plotter-content"></pre>
     </div>
 
     <div class="mobile-controls">
-      <div class="history-btn" id="btn-up">∧</div>
-      <div class="history-btn" id="btn-down">∨</div>
+      <div class="history-btn" id="btn-up" title="Undo / History Up">∧</div>
+      <div class="history-btn" id="btn-down" title="History Down">∨</div>
     </div>
 
-    <!-- Hidden File Input for LOAD command -->
-    <input type="file" id="file-input" accept=".csv" style="display:none">
+    <input type="file" id="file-input" accept=".csv,.txt" style="display:none">
   </div>
 
   <script>
-    const content = document.getElementById('content');
-    const terminal = document.getElementById('terminal');
-    const ghost = document.getElementById('ghost');
-    const overlay = document.getElementById('notepad-overlay');
-    const textArea = document.getElementById('notepad-textarea');
-    const btnCopy = document.getElementById('btn-copy');
-    const btnPaste = document.getElementById('btn-paste');
-    const btnUp = document.getElementById('btn-up');
-    const btnDown = document.getElementById('btn-down');
+    'use strict';
 
-    const mainHeader = document.getElementById('main-header'); // Cached ref
+    // ========================================
+    // CONSTANTS & CONFIGURATION
+    // ========================================
 
-    // Plotter Refs
-    const plotterOverlay = document.getElementById('plotter-overlay');
-    const plotterContent = document.getElementById('plotter-content');
-    const btnPlotCopy = document.getElementById('btn-plot-copy');
-    const btnPlotPrint = document.getElementById('btn-plot-print');
+    const STATUS = {
+      CONFIRMED: 'C',
+      UNCONFIRMED: 'U',
+      PENDING: '?',
+      EMPTY: ''
+    };
 
-    // Load Ref
-    const fileInput = document.getElementById('file-input');
+    const ROW_TYPE = {
+      WIRE: 'WIR',
+      DEVICE: 'DEV',
+      TERMINAL: 'TER'
+    };
 
-    // --- STATE MANAGEMENT ---
-    const STATE_MENU = 'MENU';
-    const STATE_TRACE = 'TRACE';
-    let currentState = STATE_MENU;
+    const STATE = {
+      MENU: 'MENU',
+      TRACE: 'TRACE'
+    };
 
-    // --- SHARED UTILS ---
-    let inputBuffer = '';
+    const PHASE = {
+      SEED_PANEL: 'SEED_PANEL',
+      SEED_DEVICE: 'SEED_DEVICE',
+      SEED_TERMINAL: 'SEED_TERMINAL',
+      DEST_PANEL: 'DEST_PANEL',
+      DEST_DEVICE: 'DEST_DEVICE',
+      DEST_TERMINAL: 'DEST_TERMINAL',
+      CALLBACK: 'CALLBACK',
+      DENSITY: 'DENSITY',
+      COMPLETE: 'COMPLETE'
+    };
 
-    // History
-    const commandHistory = [];
-    let historyIndex = -1;
-    let tempInputBuffer = '';
+    const CSV_COLUMNS = {
+      TYPE: 0,
+      PANEL: 1,
+      DEVICE: 2,
+      TERMINAL: 3,
+      TERM_KIND: 4,
+      ELEM_ID: 5,
+      DEVICE_PART: 6,
+      TO_PANEL: 7,
+      TO_DEVICE: 8,
+      TO_TERMINAL: 9,
+      CABLE_ID: 10,
+      STATUS: 11,
+      SIGNAL_ID: 12,
+      REMARKS: 13
+    };
 
-    function setHeader(text, type = 'normal') {
-      mainHeader.textContent = text;
-      mainHeader.className = 'title'; // Reset
-      if (type === 'green') mainHeader.className += ' header green';
-      if (type === 'red') mainHeader.className += ' header red';
-    }
+    // ========================================
+    // DOM REFERENCES
+    // ========================================
 
-    function clearTerminal() {
-      content.innerHTML = '';
-      inputBuffer = '';
-    }
+    const DOM = {
+      content: document.getElementById('content'),
+      terminal: document.getElementById('terminal'),
+      ghost: document.getElementById('ghost'),
+      header: document.getElementById('main-header'),
 
-    function appendLine(html) {
+      csvOverlay: document.getElementById('csv-overlay'),
+      csvTextarea: document.getElementById('csv-textarea'),
+      csvClose: document.getElementById('csv-close'),
+      btnCopy: document.getElementById('btn-copy'),
+      btnPaste: document.getElementById('btn-paste'),
+      btnSave: document.getElementById('btn-save'),
+      btnLoad: document.getElementById('btn-load'),
+
+      plotterOverlay: document.getElementById('plotter-overlay'),
+      plotterContent: document.getElementById('plotter-content'),
+      plotterClose: document.getElementById('plotter-close'),
+      btnPlotCopy: document.getElementById('btn-plot-copy'),
+      btnPlotPrint: document.getElementById('btn-plot-print'),
+
+      btnUp: document.getElementById('btn-up'),
+      btnDown: document.getElementById('btn-down'),
+      fileInput: document.getElementById('file-input')
+    };
+
+    // ========================================
+    // UTILITY FUNCTIONS
+    // ========================================
+
+    /**
+     * Sanitizes text to prevent XSS attacks
+     * @param {string} text - Text to sanitize
+     * @returns {string} Sanitized HTML
+     */
+    function sanitize(text) {
       const div = document.createElement('div');
-      div.className = 'term-line'; // Class for easier removal
-      div.innerHTML = html;
-      content.appendChild(div);
-      terminal.scrollTop = terminal.scrollHeight;
+      div.textContent = text;
+      return div.innerHTML;
     }
 
-    function removeLastLine() {
-      const lines = content.getElementsByClassName('term-line');
-      if (lines.length > 0) {
-        lines[lines.length - 1].remove();
-      }
+    /**
+     * Normalizes string for comparison (uppercase, trimmed)
+     * @param {string} str - String to normalize
+     * @returns {string} Normalized string
+     */
+    function normalize(str) {
+      return String(str || '').trim().toUpperCase();
     }
 
-    function renderInput(prompt, preContent = '') {
-      let active = document.getElementById('active-row');
-      if (active) active.remove();
-
-      const container = document.createElement('div');
-      container.id = 'active-row';
-
-      // If we have pre-content (like the Queue), add it as a block above
-      if (preContent) {
-        const preDiv = document.createElement('div');
-        preDiv.className = 'input-pre-content';
-        preDiv.innerHTML = preContent;
-        container.appendChild(preDiv);
-      }
-
-      const row = document.createElement('div');
-      row.className = 'input-row';
-      // No longer need multi-line class logic if we separate content
-
-      row.innerHTML = `<span class="prompt">${prompt}</span> <span class="input-group"><span>${inputBuffer}</span><span class="caret"></span></span>`;
-      container.appendChild(row);
-
-      content.appendChild(container);
-      terminal.scrollTop = terminal.scrollHeight;
+    /**
+     * Generates unique key for terminal identification
+     * @param {string} panel - Panel identifier
+     * @param {string} device - Device identifier
+     * @param {string} terminal - Terminal identifier
+     * @returns {string} Unique key
+     */
+    function makeKey(panel, device, terminal) {
+      return `${normalize(panel)}|${normalize(device)}|${normalize(terminal)}`;
     }
 
-    function commitInput(cmd) {
-      const active = document.getElementById('active-row');
-      const promptText = active ? active.querySelector('.prompt').innerHTML : '>';
-      // Instead of removing, we transform it into a static line (remove ID, remove caret)
-      if (active) {
-        active.removeAttribute('id');
-        const caret = active.querySelector('.caret');
-        if (caret) caret.remove();
-        // Or simply replace with static text to ensure cleanliness
-        // But matching exact plan:
-        // appendLine(`${promptText} <span>${cmd}</span>`);
-        // The plan said: "remove active, appendLine".
-        active.remove(); // Remove blinking one
-        appendLine(`${promptText} <span>${cmd}</span>`); // Add static one
-      }
+    /**
+     * Debounce function to limit rapid calls
+     * @param {Function} func - Function to debounce
+     * @param {number} wait - Wait time in ms
+     * @returns {Function} Debounced function
+     */
+    function debounce(func, wait) {
+      let timeout;
+      return function executedFunction(...args) {
+        const later = () => {
+          clearTimeout(timeout);
+          func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+      };
     }
 
-    // --- HISTORY LOGIC ---
-    function navigateHistory(direction) {
-      if (commandHistory.length === 0) return;
+    // ========================================
+    // STATE MANAGER
+    // ========================================
 
-      if (historyIndex === -1 && direction === -1) {
-        tempInputBuffer = inputBuffer;
-        historyIndex = commandHistory.length - 1;
-      } else {
-        historyIndex += direction;
-      }
+    const StateManager = {
+      currentState: STATE.MENU,
+      inputBuffer: '',
+      commandHistory: [],
+      historyIndex: -1,
+      tempInputBuffer: '',
 
-      if (historyIndex < -1) historyIndex = -1;
-      if (historyIndex >= commandHistory.length) historyIndex = commandHistory.length - 1;
-
-      if (historyIndex === -1) {
-        inputBuffer = tempInputBuffer;
-      } else {
-        inputBuffer = commandHistory[historyIndex];
-      }
-      refreshUI();
-    }
-
-    // --- MOBILE BUTTONS ---
-    if (btnUp && btnDown) {
-      btnUp.addEventListener('click', (e) => {
-        e.stopPropagation();
-        // Undo Action
-        if (currentState === STATE_TRACE) {
-          TraceTool.undo();
-        } else {
-          navigateHistory(-1); // Menu context
-        }
-        focus();
-      });
-      btnDown.addEventListener('click', (e) => {
-        e.stopPropagation();
-        if (currentState === STATE_MENU) navigateHistory(1);
-        focus();
-      });
-    }
-
-    // --- MAIN MENU PROGRAM ---
-    const MenuTool = {
-      init() {
-        clearTerminal();
-        setHeader('TRIPCOIL TERMINAL V1.1');
-        // Visual Layout
-        appendLine('----------------------------------------');
-        appendLine('<span class="prompt">AVAILABLE MODULES:</span>');
-        appendLine('&nbsp;&nbsp;1. TRACE TOOL (Active Verification)');
-        appendLine('<br>');
-        appendLine('<span class="prompt">AVAILABLE UTILITIES:</span>');
-        appendLine('&nbsp;&nbsp;2. PLOTTER (Generate Schematics)');
-        appendLine('&nbsp;&nbsp;3. DATA INTERFACE (Import/Export CSV)');
-        appendLine('&nbsp;&nbsp;4. SETTINGS');
-        appendLine('<br>');
-        appendLine('<span class="prompt">SYSTEM COMMANDS:</span>');
-        appendLine('&nbsp;&nbsp;HELP, QUIT, CLEAR');
-        appendLine('----------------------------------------');
-        inputBuffer = '';
-        this.render();
+      setState(newState) {
+        this.currentState = newState;
+        this.inputBuffer = '';
       },
-      handleInput(val) {
-        if (val === '1' || val === 'TRACE' || val === 'TRACE TOOL') {
-          switchState(STATE_TRACE);
-        } else if (val === '2' || val === 'PLOTTER' || val === 'PLOT') {
-          Plotter.show();
-        } else if (val === '3' || val === 'DATA' || val === 'CSV' || val === 'EXPORT') {
-          openNotepad();
-        } else if (val === '4' || val === 'SETTINGS' || val === 'SET') {
-          appendLine(`<span class="warn">SETTINGS MODULE NOT LOADED</span>`);
-        } else {
-          appendLine(`<span style="color:var(--warn)">INVALID SELECTION</span>`);
+
+      addToHistory(command) {
+        if (command && command !== this.commandHistory[this.commandHistory.length - 1]) {
+          this.commandHistory.push(command);
+          this.historyIndex = -1;
+          this.tempInputBuffer = '';
         }
       },
-      render() {
-        renderInput('SELECT MODULE OR UTILITY>');
+
+      navigateHistory(direction) {
+        if (this.commandHistory.length === 0) return;
+
+        if (this.historyIndex === -1 && direction === -1) {
+          this.tempInputBuffer = this.inputBuffer;
+          this.historyIndex = this.commandHistory.length - 1;
+        } else {
+          this.historyIndex += direction;
+        }
+
+        this.historyIndex = Math.max(-1, Math.min(this.historyIndex, this.commandHistory.length - 1));
+
+        if (this.historyIndex === -1) {
+          this.inputBuffer = this.tempInputBuffer;
+        } else {
+          this.inputBuffer = this.commandHistory[this.historyIndex];
+        }
       }
     };
 
+    // ========================================
+    // UI RENDERER
+    // ========================================
 
-    // --- PLOTTER TOOL ---
+    const UIRenderer = {
+      setHeader(text, type = 'normal') {
+        DOM.header.textContent = text;
+        DOM.header.className = 'title';
+        if (type === 'success') DOM.header.classList.add('success');
+        if (type === 'error') DOM.header.classList.add('error');
+      },
+
+      clearTerminal() {
+        DOM.content.innerHTML = '';
+      },
+
+      appendLine(html) {
+        const div = document.createElement('div');
+        div.className = 'term-line';
+        div.innerHTML = html;
+        DOM.content.appendChild(div);
+        this.scrollToBottom();
+      },
+
+      removeLastLine() {
+        const lines = DOM.content.getElementsByClassName('term-line');
+        if (lines.length > 0) {
+          lines[lines.length - 1].remove();
+        }
+      },
+
+      scrollToBottom: debounce(() => {
+        DOM.terminal.scrollTop = DOM.terminal.scrollHeight;
+      }, 50),
+
+      renderInput(prompt, preContent = '') {
+        let active = document.getElementById('active-row');
+        if (active) active.remove();
+
+        const container = document.createElement('div');
+        container.id = 'active-row';
+
+        if (preContent) {
+          const preDiv = document.createElement('div');
+          preDiv.className = 'input-pre-content';
+          preDiv.innerHTML = preContent;
+          container.appendChild(preDiv);
+        }
+
+        const row = document.createElement('div');
+        row.className = 'input-row';
+        row.innerHTML = `<span class="prompt">${prompt}</span> <span class="input-group"><span>${sanitize(StateManager.inputBuffer)}</span><span class="caret"></span></span>`;
+        container.appendChild(row);
+
+        DOM.content.appendChild(container);
+        this.scrollToBottom();
+      },
+
+      commitInput(cmd) {
+        const active = document.getElementById('active-row');
+        if (active) {
+          const promptText = active.querySelector('.prompt').innerHTML;
+          active.remove();
+          this.appendLine(`${promptText} <span>${sanitize(cmd)}</span>`);
+        }
+      }
+    };
+
+    // ========================================
+    // CSV PARSER
+    // ========================================
+
+    const CSVParser = {
+      /**
+       * Parses CSV text into structured row objects
+       * @param {string} csvText - Raw CSV text
+       * @returns {Array} Array of row objects
+       */
+      parse(csvText) {
+        if (!csvText) return [];
+
+        try {
+          return csvText
+            .split('\n')
+            .map(line => line.trim())
+            .filter(line => line && !line.startsWith('#') && !normalize(line).startsWith('ROW_TYPE'))
+            .map(line => {
+              const cols = line.split(',').map(c => c.trim());
+              
+              if (cols.length < 14) {
+                console.warn('Skipping malformed row:', line);
+                return null;
+              }
+
+              return {
+                type: cols[CSV_COLUMNS.TYPE] || '',
+                panel: cols[CSV_COLUMNS.PANEL] || '',
+                device: cols[CSV_COLUMNS.DEVICE] || '',
+                terminal: cols[CSV_COLUMNS.TERMINAL] || '',
+                termKind: cols[CSV_COLUMNS.TERM_KIND] || '',
+                elemId: cols[CSV_COLUMNS.ELEM_ID] || '',
+                devicePart: cols[CSV_COLUMNS.DEVICE_PART] || '',
+                toPanel: cols[CSV_COLUMNS.TO_PANEL] || '',
+                toDevice: cols[CSV_COLUMNS.TO_DEVICE] || '',
+                toTerminal: cols[CSV_COLUMNS.TO_TERMINAL] || '',
+                cableId: cols[CSV_COLUMNS.CABLE_ID] || '',
+                status: cols[CSV_COLUMNS.STATUS] || '',
+                signalId: cols[CSV_COLUMNS.SIGNAL_ID] || '',
+                remarks: cols[CSV_COLUMNS.REMARKS] || ''
+              };
+            })
+            .filter(row => row !== null);
+        } catch (error) {
+          UIRenderer.appendLine(`<span class="error">CSV PARSE ERROR: ${error.message}</span>`);
+          return [];
+        }
+      },
+
+      /**
+       * Converts row objects back to CSV text
+       * @param {Array} rows - Array of row objects
+       * @returns {string} CSV text
+       */
+      stringify(rows) {
+        const header = "ROW_TYPE,PANEL,DEVICE_TAG,TERMINAL,TERM_KIND,ELEM_ID,DEVICE_PART,TO_PANEL,TO_DEVICE,TO_TERMINAL,CABLE_ID,STATUS,SIGNAL_ID,REMARKS";
+        const lines = rows.map(r => {
+          return [
+            r.type,
+            r.panel,
+            r.device,
+            r.terminal,
+            r.termKind,
+            r.elemId,
+            r.devicePart,
+            r.toPanel,
+            r.toDevice,
+            r.toTerminal,
+            r.cableId,
+            r.status,
+            r.signalId,
+            r.remarks
+          ].join(',');
+        });
+        return header + '\n' + lines.join('\n');
+      },
+
+      /**
+       * Validates CSV structure
+       * @param {string} csvText - CSV text to validate
+       * @returns {Object} Validation result with isValid flag and errors array
+       */
+      validate(csvText) {
+        const errors = [];
+        const lines = csvText.split('\n').filter(l => l.trim() && !l.trim().startsWith('#'));
+
+        lines.forEach((line, idx) => {
+          const cols = line.split(',');
+          if (cols.length !== 14) {
+            errors.push(`Line ${idx + 1}: Expected 14 columns, got ${cols.length}`);
+          }
+        });
+
+        return {
+          isValid: errors.length === 0,
+          errors
+        };
+      }
+    };
+
+    // ========================================
+    // TRACE TOOL
+    // ========================================
+
+    const TraceTool = {
+      rows: [],
+      phase: PHASE.SEED_PANEL,
+      inputs: {},
+      currentFrom: null,
+      discoveryStack: [],
+      undoStack: [],
+
+      init() {
+        UIRenderer.clearTerminal();
+        UIRenderer.setHeader('');
+
+        this.rows = CSVParser.parse(DOM.csvTextarea.value);
+        this.phase = PHASE.SEED_PANEL;
+        this.inputs = {};
+        this.currentFrom = null;
+        this.discoveryStack = [];
+        this.undoStack = [];
+
+        this.render();
+      },
+
+      /**
+       * Saves current state for undo functionality
+       * @param {string} processedInput - The input that was just processed
+       */
+      saveState(processedInput) {
+        const snapshot = {
+          phase: this.phase,
+          inputs: JSON.parse(JSON.stringify(this.inputs)),
+          discoveryStack: JSON.parse(JSON.stringify(this.discoveryStack)),
+          currentFrom: this.currentFrom ? JSON.parse(JSON.stringify(this.currentFrom)) : null,
+          rowsLength: this.rows.length,
+          lastInput: processedInput
+        };
+        this.undoStack.push(snapshot);
+
+        // Limit undo stack to prevent memory issues
+        if (this.undoStack.length > 50) {
+          this.undoStack.shift();
+        }
+      },
+
+      /**
+       * Undoes the last action
+       */
+      undo() {
+        if (this.undoStack.length === 0) return;
+
+        const snap = this.undoStack.pop();
+
+        // If rows were added, remove them
+        if (snap.rowsLength < this.rows.length) {
+          this.rows.length = snap.rowsLength;
+        }
+
+        this.phase = snap.phase;
+        this.inputs = snap.inputs;
+        this.discoveryStack = snap.discoveryStack;
+        this.currentFrom = snap.currentFrom;
+
+        UIRenderer.removeLastLine();
+        StateManager.inputBuffer = snap.lastInput;
+        this.render();
+      },
+
+      handleInput(val) {
+        this.saveState(val);
+
+        switch (this.phase) {
+          case PHASE.SEED_PANEL:
+            this.handleSeedPanel(val);
+            break;
+          case PHASE.SEED_DEVICE:
+            this.handleSeedDevice(val);
+            break;
+          case PHASE.SEED_TERMINAL:
+            this.handleSeedTerminal(val);
+            break;
+          case PHASE.DEST_PANEL:
+            this.handleDestPanel(val);
+            break;
+          case PHASE.DEST_DEVICE:
+            this.handleDestDevice(val);
+            break;
+          case PHASE.DEST_TERMINAL:
+            this.handleDestTerminal(val);
+            break;
+          case PHASE.CALLBACK:
+            this.handleCallback(val);
+            break;
+          case PHASE.DENSITY:
+            this.handleDensity(val);
+            break;
+        }
+
+        this.render();
+      },
+
+      handleSeedPanel(val) {
+        this.inputs.panel = val;
+        UIRenderer.appendLine(`<span class="prompt">FROM PANEL:</span> <span>${sanitize(val)}</span>`);
+        UIRenderer.setHeader(`📍    ${this.inputs.panel}    📍`);
+        this.phase = PHASE.SEED_DEVICE;
+      },
+
+      handleSeedDevice(val) {
+        this.inputs.device = val;
+        UIRenderer.appendLine(`<span class="prompt">FROM DEVICE:</span> <span>${sanitize(val)}</span>`);
+        UIRenderer.setHeader(`📍    ${this.inputs.panel} ${this.inputs.device}    📍`);
+        this.phase = PHASE.SEED_TERMINAL;
+      },
+
+      handleSeedTerminal(val) {
+        this.inputs.terminal = val;
+        UIRenderer.appendLine(`<span class="prompt">FROM TERMINAL:</span> <span>${sanitize(val)}</span>`);
+        UIRenderer.setHeader(`📍    ${this.inputs.panel} ${this.inputs.device} ${this.inputs.terminal}    📍`);
+
+        this.currentFrom = {
+          panel: this.inputs.panel,
+          device: this.inputs.device,
+          terminal: this.inputs.terminal,
+          count: 0
+        };
+
+        this.startDestinationPhase();
+      },
+
+      handleDestPanel(val) {
+        this.inputs.toPanel = val;
+        UIRenderer.appendLine(`<span class="prompt">TO PANEL:</span> <span>${sanitize(val)}</span>`);
+        this.phase = PHASE.DEST_DEVICE;
+      },
+
+      handleDestDevice(val) {
+        this.inputs.toDevice = val;
+        UIRenderer.appendLine(`<span class="prompt">TO DEVICE:</span> <span>${sanitize(val)}</span>`);
+        this.phase = PHASE.DEST_TERMINAL;
+      },
+
+      handleDestTerminal(val) {
+        this.inputs.toTerminal = val;
+        UIRenderer.appendLine(`<span class="prompt">TO TERMINAL:</span> <span>${sanitize(val)}</span>`);
+        UIRenderer.setHeader(`📍    ${this.inputs.toPanel} ${this.inputs.toDevice} ${this.inputs.toTerminal}    📍`);
+        UIRenderer.clearTerminal();
+        this.phase = PHASE.CALLBACK;
+      },
+
+      handleCallback(val) {
+        const norm = normalize(val);
+        const isYes = norm.startsWith('Y');
+        this.inputs.callsBack = isYes ? 'Y' : 'N';
+
+        UIRenderer.appendLine(`<span class="prompt">FOUND WIRE ${this.currentFrom.panel}/${this.currentFrom.device}/${this.currentFrom.terminal}?</span> <span>${this.inputs.callsBack}</span>`);
+        UIRenderer.clearTerminal();
+        this.phase = PHASE.DENSITY;
+      },
+
+      handleDensity(val) {
+        const count = parseInt(val, 10);
+        if (isNaN(count) || count < 0) {
+          UIRenderer.appendLine(`<span class="warn">INVALID NUMBER - ENTER 0 OR GREATER</span>`);
+          return;
+        }
+        UIRenderer.appendLine(`<span class="prompt">WIRE COUNT:</span> <span>${count}</span>`);
+        this.processJump(count);
+      },
+
+      startDestinationPhase() {
+        UIRenderer.clearTerminal();
+        this.inputs.toPanel = '';
+        this.inputs.toDevice = '';
+        this.inputs.toTerminal = '';
+        this.inputs.callsBack = '';
+        this.phase = PHASE.DEST_PANEL;
+      },
+
+      /**
+       * Finds matching row in CSV data (bidirectional)
+       * @returns {Object|null} Matched row or null
+       */
+      findMatchingRow() {
+        const currentPanel = normalize(this.currentFrom.panel);
+        const currentDevice = normalize(this.currentFrom.device);
+        const currentTerminal = normalize(this.currentFrom.terminal);
+        const toPanel = normalize(this.inputs.toPanel);
+        const toDevice = normalize(this.inputs.toDevice);
+        const toTerminal = normalize(this.inputs.toTerminal);
+
+        return this.rows.find(r => {
+          if (r.type !== ROW_TYPE.WIRE) return false;
+
+          const rowPanel = normalize(r.panel);
+          const rowDevice = normalize(r.device);
+          const rowTerminal = normalize(r.terminal);
+          const rowToPanel = normalize(r.toPanel);
+          const rowToDevice = normalize(r.toDevice);
+          const rowToTerminal = normalize(r.toTerminal);
+
+          // Forward match
+          const forwardMatch = (
+            rowPanel === currentPanel &&
+            rowDevice === currentDevice &&
+            rowTerminal === currentTerminal &&
+            rowToPanel === toPanel &&
+            rowToDevice === toDevice &&
+            rowToTerminal === toTerminal
+          );
+
+          // Reverse match
+          const reverseMatch = (
+            rowPanel === toPanel &&
+            rowDevice === toDevice &&
+            rowTerminal === toTerminal &&
+            rowToPanel === currentPanel &&
+            rowToDevice === currentDevice &&
+            rowToTerminal === currentTerminal
+          );
+
+          return forwardMatch || reverseMatch;
+        });
+      },
+
+      /**
+       * Processes a jump from current terminal to destination
+       * @param {number} toCount - Number of wires at destination
+       */
+      processJump(toCount) {
+        const matchedRow = this.findMatchingRow();
+        const isConfirmed = (this.inputs.callsBack !== 'N');
+        const newStatus = isConfirmed ? STATUS.CONFIRMED : STATUS.UNCONFIRMED;
+
+        if (matchedRow) {
+          // Update existing row - ONLY STATUS, no remarks
+          matchedRow.status = newStatus;
+          matchedRow.remarks = ''; // Clear any old remarks
+        } else {
+          // Create new row - ONLY STATUS, no remarks
+          this.rows.push({
+            type: ROW_TYPE.WIRE,
+            panel: this.currentFrom.panel,
+            device: this.currentFrom.device,
+            terminal: this.currentFrom.terminal,
+            termKind: '',
+            elemId: '',
+            devicePart: '',
+            toPanel: this.inputs.toPanel,
+            toDevice: this.inputs.toDevice,
+            toTerminal: this.inputs.toTerminal,
+            cableId: '',
+            status: newStatus,
+            signalId: '',
+            remarks: '' // Empty remarks - only C or U in status
+          });
+        }
+
+        // Update discovery stack
+        this.updateDiscoveryStack();
+
+        // Determine next step
+        this.handleNextStep(toCount);
+      },
+
+      /**
+       * Updates discovery stack after processing a wire
+       */
+      updateDiscoveryStack() {
+        const stackIdx = this.discoveryStack.findIndex(n =>
+          normalize(n.panel) === normalize(this.currentFrom.panel) &&
+          normalize(n.device) === normalize(this.currentFrom.device) &&
+          normalize(n.terminal) === normalize(this.currentFrom.terminal)
+        );
+
+        if (stackIdx !== -1) {
+          this.discoveryStack[stackIdx].count--;
+          if (this.discoveryStack[stackIdx].count <= 0) {
+            this.discoveryStack.splice(stackIdx, 1);
+          }
+        }
+      },
+
+      /**
+       * Handles next step after processing a wire
+       * @param {number} toCount - Number of wires at destination
+       */
+      handleNextStep(toCount) {
+        // Check for pending wires at destination in CSV
+        const destPending = this.getUnverifiedWires(
+          this.inputs.toPanel,
+          this.inputs.toDevice,
+          this.inputs.toTerminal
+        );
+
+        const nextCount = destPending.length > 0 ? destPending.length : toCount;
+
+        if (nextCount > 0) {
+          const toNode = {
+            panel: this.inputs.toPanel,
+            device: this.inputs.toDevice,
+            terminal: this.inputs.toTerminal,
+            count: nextCount
+          };
+
+          this.discoveryStack.push(toNode);
+          this.currentFrom = toNode;
+          UIRenderer.setHeader(`📍    ${this.currentFrom.panel} ${this.currentFrom.device} ${this.currentFrom.terminal}    📍`);
+          this.startDestinationPhase();
+        } else {
+          this.circleBack();
+        }
+      },
+
+      /**
+       * Gets unverified wires for a terminal
+       * @param {string} panel - Panel identifier
+       * @param {string} device - Device identifier
+       * @param {string} terminal - Terminal identifier
+       * @returns {Array} Array of unverified rows
+       */
+      getUnverifiedWires(panel, device, terminal) {
+        const normPanel = normalize(panel);
+        const normDevice = normalize(device);
+        const normTerminal = normalize(terminal);
+
+        return this.rows.filter(r => {
+          if (r.type !== ROW_TYPE.WIRE) return false;
+
+          const status = normalize(r.status);
+          if (status === STATUS.CONFIRMED || status === STATUS.UNCONFIRMED) return false;
+
+          const rowPanel = normalize(r.panel);
+          const rowDevice = normalize(r.device);
+          const rowTerminal = normalize(r.terminal);
+
+          return rowPanel === normPanel &&
+            rowDevice === normDevice &&
+            rowTerminal === normTerminal;
+        });
+      },
+
+      /**
+       * Circles back to previous unfinished terminal
+       */
+      circleBack() {
+        if (this.discoveryStack.length > 0) {
+          const nextSrc = this.discoveryStack[this.discoveryStack.length - 1];
+          this.currentFrom = nextSrc;
+          UIRenderer.setHeader(`📍    ${this.currentFrom.panel} ${this.currentFrom.device} ${this.currentFrom.terminal}    📍`);
+          UIRenderer.appendLine(`<div class="info">↺ CIRCLING BACK TO: ${nextSrc.panel} / ${nextSrc.device} / ${nextSrc.terminal} (${nextSrc.count} REMAINING)</div>`);
+          this.startDestinationPhase();
+        } else {
+          this.completeTrace();
+        }
+      },
+
+      /**
+       * Completes the trace session
+       */
+      completeTrace() {
+        this.phase = PHASE.COMPLETE;
+        UIRenderer.setHeader('SESSION COMPLETE', 'success');
+        UIRenderer.appendLine('<div class="success">✓ ALL WIRES VERIFIED - TRACE COMPLETE</div>');
+        UIRenderer.appendLine('<div class="prompt">TYPE "EXPORT" TO SAVE CSV OR "PLOT" TO VIEW DIAGRAM</div>');
+      },
+
+      /**
+       * Renders the queue of wires for current terminal
+       * @returns {string} HTML for queue display
+       */
+      renderQueue() {
+        if (!this.currentFrom) return '';
+
+        const currentPanel = normalize(this.currentFrom.panel);
+        const currentDevice = normalize(this.currentFrom.device);
+        const currentTerminal = normalize(this.currentFrom.terminal);
+
+        // Find all wires connected to current terminal
+        const relevantRows = this.rows.filter(r => {
+          if (r.type !== ROW_TYPE.WIRE) return false;
+
+          const rowPanel = normalize(r.panel);
+          const rowDevice = normalize(r.device);
+          const rowTerminal = normalize(r.terminal);
+          const rowToPanel = normalize(r.toPanel);
+          const rowToDevice = normalize(r.toDevice);
+          const rowToTerminal = normalize(r.toTerminal);
+
+          const matchSource = (
+            rowPanel === currentPanel &&
+            rowDevice === currentDevice &&
+            rowTerminal === currentTerminal
+          );
+
+          const matchDest = (
+            rowToPanel === currentPanel &&
+            rowToDevice === currentDevice &&
+            rowToTerminal === currentTerminal
+          );
+
+          return matchSource || matchDest;
+        });
+
+        const formatOther = (r) => {
+          const rowPanel = normalize(r.panel);
+          const rowDevice = normalize(r.device);
+          const rowTerminal = normalize(r.terminal);
+
+          if (
+            rowPanel === currentPanel &&
+            rowDevice === currentDevice &&
+            rowTerminal === currentTerminal
+          ) {
+            return `${r.toPanel} ${r.toDevice} ${r.toTerminal}`;
+          } else {
+            return `${r.panel} ${r.device} ${r.terminal}`;
+          }
+        };
+
+        let output = '';
+        const verified = [];
+        const unconfirmed = [];
+        const pending = [];
+
+        // Categorize wires
+        relevantRows.forEach(r => {
+          const status = normalize(r.status);
+
+          if (status === STATUS.CONFIRMED) {
+            verified.push(r);
+          } else if (status === STATUS.UNCONFIRMED) {
+            unconfirmed.push(r);
+          } else {
+            pending.push(r);
+          }
+        });
+
+        // Render verified wires
+        verified.forEach(r => {
+          output += `<span class="ok">[ ✓ ] VERIFIED: ${formatOther(r)}</span><br>`;
+        });
+
+        // Render unconfirmed wires
+        unconfirmed.forEach(r => {
+          output += `<span class="warn">[ ✗ ] UNCONFIRMED: ${formatOther(r)}</span><br>`;
+        });
+
+        // Add spacing if we have both verified/unconfirmed and pending
+        if ((verified.length > 0 || unconfirmed.length > 0) && pending.length > 0) {
+          output += '<br>';
+        }
+
+        // Render pending wires
+        pending.forEach(r => {
+          output += `<span class="muted">[ ? ] PENDING: ${formatOther(r)}</span><br>`;
+        });
+
+        return output;
+      },
+
+      render() {
+        let label = '';
+
+        switch (this.phase) {
+          case PHASE.SEED_PANEL:
+            label = 'FROM PANEL?';
+            break;
+          case PHASE.SEED_DEVICE:
+            label = 'FROM DEVICE?';
+            break;
+          case PHASE.SEED_TERMINAL:
+            label = 'FROM TERMINAL?';
+            break;
+          case PHASE.DEST_PANEL:
+            const queue = this.renderQueue();
+            UIRenderer.renderInput('TO PANEL?', queue);
+            return;
+          case PHASE.DEST_DEVICE:
+            label = 'TO DEVICE?';
+            break;
+          case PHASE.DEST_TERMINAL:
+            label = 'TO TERMINAL?';
+            break;
+          case PHASE.CALLBACK:
+            label = `FOUND WIRE ${this.currentFrom.panel}/${this.currentFrom.device}/${this.currentFrom.terminal}? (Y/N)`;
+            break;
+          case PHASE.DENSITY:
+            const header = `<span class="muted"><i>EXCLUDING ${this.currentFrom.panel}/${this.currentFrom.device}/${this.currentFrom.terminal}...</i></span><br>`;
+            const prompt = `HOW MANY WIRES ON ${this.inputs.toPanel}/${this.inputs.toDevice}/${this.inputs.toTerminal}?`;
+            UIRenderer.renderInput(prompt, header);
+            return;
+          case PHASE.COMPLETE:
+            label = 'SESSION COMPLETE - TYPE QUIT';
+            break;
+        }
+
+        if (label) UIRenderer.renderInput(label);
+      }
+    };
+
+    // ========================================
+    // MENU TOOL
+    // ========================================
+
+    const MenuTool = {
+      init() {
+        UIRenderer.clearTerminal();
+        UIRenderer.setHeader('TRIPCOIL TERMINAL V1.1');
+
+        UIRenderer.appendLine('<div style="color:var(--accent);font-size:18px;margin-bottom:10px;">⚡ SYSTEM READY</div>');
+        UIRenderer.appendLine('<span style="color:var(--dim)">════════════════════════════════════════</span>');
+        UIRenderer.appendLine('<span class="prompt">📦 AVAILABLE MODULES:</span>');
+        UIRenderer.appendLine('   <span class="info">1</span> → TRACE TOOL <span class="muted">(Active Verification)</span>');
+        UIRenderer.appendLine('');
+        UIRenderer.appendLine('<span class="prompt">🛠️  AVAILABLE UTILITIES:</span>');
+        UIRenderer.appendLine('   <span class="info">2</span> → PLOTTER <span class="muted">(Generate Schematics)</span>');
+        UIRenderer.appendLine('   <span class="info">3</span> → DATA INTERFACE <span class="muted">(Import/Export CSV)</span>');
+        UIRenderer.appendLine('');
+        UIRenderer.appendLine('<span class="prompt">⌨️  SYSTEM COMMANDS:</span>');
+        UIRenderer.appendLine('   <span class="info">HELP</span> <span class="info">QUIT</span> <span class="info">CLEAR</span>');
+        UIRenderer.appendLine('<span style="color:var(--dim)">════════════════════════════════════════</span>');
+
+        this.render();
+      },
+
+      handleInput(val) {
+        const cmd = normalize(val);
+
+        if (cmd === '1' || cmd === 'TRACE' || cmd === 'TRACE TOOL') {
+          StateManager.setState(STATE.TRACE);
+          TraceTool.init();
+        } else if (cmd === '2' || cmd === 'PLOTTER' || cmd === 'PLOT') {
+          Plotter.show();
+        } else if (cmd === '3' || cmd === 'DATA' || cmd === 'CSV' || cmd === 'EXPORT') {
+          DataInterface.open();
+        } else {
+          UIRenderer.appendLine(`<span class="warn">⚠ INVALID SELECTION - TRY AGAIN</span>`);
+        }
+      },
+
+      render() {
+        UIRenderer.renderInput('SELECT MODULE OR UTILITY >');
+      }
+    };
+
+    // ========================================
+    // PLOTTER
+    // ========================================
+
     const Plotter = {
       show() {
         let csv = '';
-        if (currentState === STATE_TRACE && TraceTool.history.length > 0) {
-          csv = TraceTool.history.map(h => `WIR,${h.from.p},${h.from.d},${h.from.t},,,,${h.to.p},${h.to.d},${h.to.t},,${h.status}${h.callsBack === 'N' ? '!' : ''},,`).join('\n');
-        } else if (textArea.value.includes('WIR,')) {
-          // Fallback: try to read from notepad if it has data
-          csv = textArea.value;
+
+        if (TraceTool.rows && TraceTool.rows.length > 0) {
+          csv = CSVParser.stringify(TraceTool.rows);
+        } else if (DOM.csvTextarea.value.includes('WIR,')) {
+          csv = DOM.csvTextarea.value;
         }
 
         if (!csv) {
-          plotterContent.innerHTML = '<span class="muted">No data to plot. Start a trace or export first.</span>';
-          plotterOverlay.style.display = 'flex';
+          DOM.plotterContent.innerHTML = '<span class="muted">No data to plot.\n\nStart a trace session or load CSV data first.</span>';
+          DOM.plotterOverlay.style.display = 'flex';
           return;
         }
 
@@ -576,881 +1302,506 @@
           const rows = this.parse(csv);
           const graph = this.buildGraph(rows);
           const html = this.renderTree(graph);
-          plotterContent.innerHTML = html;
+          DOM.plotterContent.innerHTML = html;
         } catch (e) {
           console.error(e);
-          plotterContent.innerHTML = `<span class="bad">Error rendering plot: ${e.message}</span>`;
+          DOM.plotterContent.innerHTML = `<span class="error">Error rendering plot:\n${e.message}</span>`;
         }
-        plotterOverlay.style.display = 'flex';
+
+        DOM.plotterOverlay.style.display = 'flex';
       },
+
       close() {
-        plotterOverlay.style.display = 'none';
+        DOM.plotterOverlay.style.display = 'none';
         focus();
       },
+
       parse(csv) {
-        // Auto-fix missing newlines for WIR rows (robustness for bad copy-paste)
         const cleanCsv = csv.replace(/(\s)WIR,/g, '\nWIR,');
-        return cleanCsv.split('\n').map(l => l.trim().split(',')).filter(r => r[0] === 'WIR').map(c => ({
-          from: { p: c[1], d: c[2], t: c[3] }, to: { p: c[7], d: c[8], t: c[9] }, status: c[11]
-        }));
+        return cleanCsv
+          .split('\n')
+          .map(l => l.trim().split(','))
+          .filter(r => r[0] === ROW_TYPE.WIRE && r.length >= 12)
+          .map(c => ({
+            from: { p: c[1], d: c[2], t: c[3] },
+            to: { p: c[7], d: c[8], t: c[9] },
+            status: c[11] || ''
+          }));
       },
+
       buildGraph(rows) {
         const nodes = new Map();
         const visited = new Set();
-        const k = (p, d, t) => `${p}|${d}|${t}`;
+
         rows.forEach(r => {
-          const fk = k(r.from.p, r.from.d, r.from.t);
-          const tk = k(r.to.p, r.to.d, r.to.t);
-          if (!nodes.has(fk)) nodes.set(fk, { l: `${r.from.p}/${r.from.d}/${r.from.t}`, conns: [] });
+          const fromKey = makeKey(r.from.p, r.from.d, r.from.t);
+          const toKey = makeKey(r.to.p, r.to.d, r.to.t);
 
-          let s = 'muted';
-          if (r.status === 'C' || r.status === '.') s = 'ok';
-          else if (r.status && r.status.includes('!')) s = 'bad';
-          else if (r.status && r.status.endsWith('?')) s = 'warn';
+          if (!nodes.has(fromKey)) {
+            nodes.set(fromKey, {
+              label: `${r.from.p}/${r.from.d}/${r.from.t}`,
+              connections: []
+            });
+          }
 
-          nodes.get(fk).conns.push({ k: tk, l: `${r.to.p}/${r.to.d}/${r.to.t}`, s: s });
-          visited.add(tk);
+          // Determine status class
+          let statusClass = 'muted';
+          const status = normalize(r.status);
+          if (status === STATUS.CONFIRMED) statusClass = 'ok';
+          else if (status === STATUS.UNCONFIRMED) statusClass = 'warn';
+          else if (status.includes('!')) statusClass = 'error';
+
+          nodes.get(fromKey).connections.push({
+            key: toKey,
+            label: `${r.to.p}/${r.to.d}/${r.to.t}`,
+            status: statusClass
+          });
+
+          visited.add(toKey);
         });
-        nodes.forEach(n => n.conns.sort((a, b) => a.l.localeCompare(b.l)));
+
+        // Sort connections alphabetically
+        nodes.forEach(n => n.connections.sort((a, b) => a.label.localeCompare(b.label)));
+
+        // Find root nodes (not referenced as destinations)
         const roots = [...nodes.keys()].filter(k => !visited.has(k));
+
         return { nodes, roots };
       },
+
       renderTree({ nodes, roots }) {
-        let out = '';
-        const draw = (key, pfx, isRoot) => {
-          const n = nodes.get(key);
-          const lbl = n ? n.l : key.split('|').join('/');
-          let h = '';
+        let output = '';
 
-          if (isRoot) h += `${lbl}\n`;
-          if (!n) return h;
+        const draw = (key, prefix, isRoot) => {
+          const node = nodes.get(key);
+          const label = node ? node.label : key.split('|').join('/');
+          let html = '';
 
-          n.conns.forEach((c, i) => {
-            const last = i === n.conns.length - 1;
-            h += `${pfx}${last ? '└── ' : '├── '}<span class="${c.s}">${c.l}</span>\n`;
-            if (nodes.has(c.k)) {
-              h += draw(c.k, pfx + (last ? '    ' : '│   '), false);
+          if (isRoot) html += `<strong>${label}</strong>\n`;
+          if (!node) return html;
+
+          node.connections.forEach((conn, idx) => {
+            const isLast = idx === node.connections.length - 1;
+            const branch = isLast ? '└── ' : '├── ';
+            html += `${prefix}${branch}<span class="${conn.status}">${conn.label}</span>\n`;
+
+            if (nodes.has(conn.key)) {
+              const newPrefix = prefix + (isLast ? '    ' : '│   ');
+              html += draw(conn.key, newPrefix, false);
             }
           });
-          return h;
+
+          return html;
         };
-        roots.forEach(r => out += draw(r, '', true) + '\n');
-        return out || 'No roots found.';
-      }
-    };
-    window.closePlotter = () => Plotter.close();
 
-    // --- TRACE TOOL PROGRAM (LOOP-BACK & BRANCH) ---
-    const TraceTool = {
-      // State
-      discoveryStack: [], // Renamed from stack
-      rows: [], // LIVE CSV DATA
-      history: [],
-      inputs: {},
-      phase: 'SEED',
-      currentFrom: null,
-      lastVerified: null, // New State for "Verified" header
-      undoStack: [], // Snapshots
-
-      // Constants
-      PHASE: {
-        SEED_PANEL: 'SEED_PANEL',
-        SEED_DEVICE: 'SEED_DEVICE',
-        SEED_TERMINAL: 'SEED_TERMINAL',
-
-        DEST_PANEL: 'DEST_PANEL',
-        DEST_DEVICE: 'DEST_DEVICE',
-        DEST_TERMINAL: 'DEST_TERMINAL',
-
-        CALLBACK: 'CALLBACK',
-        DENSITY: 'DENSITY',
-
-        COMPLETE: 'COMPLETE'
-      },
-
-      init() {
-        clearTerminal();
-        setHeader(''); // Initially blank as requested
-        this.discoveryStack = [];
-        this.rows = this.parseRows(textArea.value); // Load from Global Text Area
-        this.history = [];
-        this.undoStack = [];
-        this.inputs = {};
-        this.currentFrom = null;
-        this.lastVerified = null;
-        this.phase = this.PHASE.SEED_PANEL;
-        inputBuffer = '';
-        this.render();
-      },
-
-      saveState(processedInput) {
-        // Serialize current state
-        const snapshot = {
-          phase: this.phase,
-          inputs: JSON.parse(JSON.stringify(this.inputs)),
-          discoveryStack: JSON.parse(JSON.stringify(this.discoveryStack)),
-          history: JSON.parse(JSON.stringify(this.history)),
-          currentFrom: this.currentFrom ? JSON.parse(JSON.stringify(this.currentFrom)) : null,
-          lastVerified: this.lastVerified ? JSON.parse(JSON.stringify(this.lastVerified)) : null,
-          lastInput: processedInput
-        };
-        this.undoStack.push(snapshot);
-      },
-
-      undo() {
-        if (this.undoStack.length === 0) return;
-
-        const snap = this.undoStack.pop();
-
-        // Restore
-        this.phase = snap.phase;
-        this.inputs = snap.inputs;
-        this.discoveryStack = snap.discoveryStack;
-        this.history = snap.history;
-        this.history = snap.history;
-        this.currentFrom = snap.currentFrom;
-        this.lastVerified = snap.lastVerified; // Restore verified state
-
-        // Visual: Remove last line
-        removeLastLine();
-
-        // Input: Restore what they typed
-        inputBuffer = snap.lastInput;
-
-        this.render();
-      },
-
-      handleInput(val) {
-        this.saveState(val); // Undo point -> Current State + The Input being processed
-
-        const P = this.PHASE;
-
-        switch (this.phase) {
-          // --- SEED PHASE ---
-          case P.SEED_PANEL:
-            this.inputs.p = val;
-            appendLine(`<span class="prompt">FROM PANEL:</span> <span>${val}</span>`);
-            setHeader(`📍    ${this.inputs.p}    📍`);
-            this.phase = P.SEED_DEVICE;
-            break;
-
-          case P.SEED_DEVICE:
-            this.inputs.d = val;
-            appendLine(`<span class="prompt">FROM DEVICE:</span> <span>${val}</span>`);
-            setHeader(`📍    ${this.inputs.p} ${this.inputs.d}    📍`);
-            this.phase = P.SEED_TERMINAL;
-            break;
-
-          case P.SEED_TERMINAL:
-            this.inputs.t = val;
-            appendLine(`<span class="prompt">FROM TERMINAL:</span> <span>${val}</span>`);
-            // Seed established. Initialize currentFrom.
-            // Update Header to full Seed
-            setHeader(`📍    ${this.inputs.p} ${this.inputs.d} ${this.inputs.t}    📍`);
-
-            this.currentFrom = { p: this.inputs.p, d: this.inputs.d, t: this.inputs.t, count: 0 };
-
-            // Note: startDestinationPhase() now handles clearing the screen
-            this.startDestinationPhase();
-            break;
-
-          // --- DESTINATION PHASE ---
-          case P.DEST_PANEL:
-            this.inputs.toP = val;
-            appendLine(`<span class="prompt">TO PANEL:</span> <span>${val}</span>`);
-            this.phase = P.DEST_DEVICE;
-            break;
-
-          case P.DEST_DEVICE:
-            this.inputs.toD = val;
-            appendLine(`<span class="prompt">TO DEVICE:</span> <span>${val}</span>`);
-            this.phase = P.DEST_TERMINAL;
-            break;
-
-          case P.DEST_TERMINAL:
-            this.inputs.toT = val;
-            appendLine(`<span class="prompt">TO TERMINAL:</span> <span>${val}</span>`);
-
-            // Immediate Transition: Update Header & Clear Screen
-            setHeader(`📍    ${this.inputs.toP} ${this.inputs.toD} ${this.inputs.toT}    📍`);
-            clearTerminal();
-
-            this.phase = P.CALLBACK;
-            break;
-
-          // --- CALLBACK PHASE ---
-          case P.CALLBACK:
-            const norm = val.toUpperCase().trim();
-            const isYes = norm.startsWith('Y');
-            this.inputs.callsBack = isYes ? 'Y' : 'N';
-
-            appendLine(`<span class="prompt">FOUND WIRE ${this.currentFrom.p}/${this.currentFrom.d}/${this.currentFrom.t}?</span> <span>${this.inputs.callsBack}</span>`);
-
-            // Update Header Color (Temporary for Callback Check)
-            // User requested header remains static with FROM loc until TO TERM entered.
-            // But this is the check step. Maybe we keep the static header or show the check?
-            // Header updated in DEST_TERMINAL now.
-            // setHeader(`📍    ${this.inputs.toP} ${this.inputs.toD} ${this.inputs.toT}    📍`);
-
-            clearTerminal(); // Clear before asking Density
-            this.phase = P.DENSITY;
-            break;
-
-          // --- DENSITY PHASE ---
-          case P.DENSITY:
-            const count = parseInt(val);
-            if (isNaN(count)) {
-              appendLine(`<span style="color:var(--warn)">INVALID NUMBER</span>`);
-              this.render();
-              return;
-            }
-            appendLine(`<span class="prompt">BESIDES ${this.currentFrom.p}/${this.currentFrom.d}/${this.currentFrom.t}, HOW MANY WIRES ON ${this.inputs.toP}/${this.inputs.toD}/${this.inputs.toT}?</span> <span>${val}</span>`);
-            this.processJump(count);
-            break;
+        if (roots.length === 0) {
+          return '<span class="warn">No root nodes found.\n\nThis may indicate circular references in your wiring data.</span>';
         }
 
-        this.render();
+        roots.forEach(r => output += draw(r, '', true) + '\n');
+        return output;
+      }
+    };
+
+    // ========================================
+    // DATA INTERFACE
+    // ========================================
+
+    const DataInterface = {
+      open() {
+        let content = '';
+
+        if (StateManager.currentState === STATE.TRACE && TraceTool.rows.length > 0) {
+          content = CSVParser.stringify(TraceTool.rows);
+        }
+
+        if (content) {
+          DOM.csvTextarea.value = content;
+        }
+
+        DOM.csvOverlay.style.display = 'flex';
+        DOM.csvTextarea.focus();
       },
 
-      startDestinationPhase() {
-        clearTerminal(); // Clear history when starting a new leg
-        this.inputs.toP = '';
-        this.inputs.toD = '';
-        this.inputs.toT = ''; // Clear destination buffer
-        this.inputs.callsBack = '';
-        this.phase = this.PHASE.DEST_PANEL;
+      close() {
+        DOM.csvOverlay.style.display = 'none';
+        focus();
       },
 
-      markHistoryComplete(term) {
-        // Update any history records where this terminal was the destination
-        this.history.forEach(h => {
-          if (h.to.p === term.p && h.to.d === term.d && h.to.t === term.t) {
-            h.status = 'C';
-          }
-        });
-      },
+      save() {
+        let csv = '';
 
-      processJump(toCount) {
-        // 1. Find Matching Row in CSV Data (Bidirectional & Case-Insensitive)
-        // Ensure inputs are clean/upper for comparison
-        const cp = this.currentFrom.p.toUpperCase();
-        const cd = this.currentFrom.d.toUpperCase();
-        const ct = this.currentFrom.t.toUpperCase();
-        const tp = this.inputs.toP.toUpperCase();
-        const td = this.inputs.toD.toUpperCase();
-        const tt = this.inputs.toT.toUpperCase();
-
-        const match = this.rows.find(r => {
-          if (r.type !== 'WIR') return false;
-          // Fallback to empty string if undefined (though parseRows handles it)
-          const rp = (r.pan || '').toUpperCase();
-          const rd = (r.dev || '').toUpperCase();
-          const rt = (r.term || '').toUpperCase();
-          const rtp = (r.to_pan || '').toUpperCase();
-          const rtd = (r.to_dev || '').toUpperCase();
-          const rtt = (r.to_term || '').toUpperCase();
-
-          // Forward
-          if (rp === cp && rd === cd && rt === ct && rtp === tp && rtd === td && rtt === tt) return true;
-          // Reverse
-          if (rp === tp && rd === td && rt === tt && rtp === cp && rtd === cd && rtt === ct) return true;
-
-          return false;
-        });
-
-        let status = 'C';
-        // 2. Update Status
-        if (match) {
-          match.status = 'C';
-          // If callsBack logic needed?
-          // "If ... confirms the 'Call-Back', immediately update... STATUS to 'C'"
-          // Assuming 'C' implies callback verified or N/A.
-          // If callsBack === 'N', traditionally we flagged it '!' or similar.
-          // But 'C' counts as verified.
+        if (StateManager.currentState === STATE.TRACE && TraceTool.rows.length > 0) {
+          csv = CSVParser.stringify(TraceTool.rows);
         } else {
-          // Create NEW Row (User found wire not in CSV)
-          this.rows.push({
-            type: 'WIR',
-            pan: this.currentFrom.p, dev: this.currentFrom.d, term: this.currentFrom.t,
-            kind: '', elem: '', part: '',
-            to_pan: this.inputs.toP, to_dev: this.inputs.toD, to_term: this.inputs.toT,
-            cable: '', status: 'C', signal: '', remarks: 'FIELD_ADD'
+          csv = DOM.csvTextarea.value;
+        }
+
+        if (!csv || csv.trim() === '') {
+          UIRenderer.appendLine('<span class="warn">⚠ NO DATA TO SAVE</span>');
+          return;
+        }
+
+        // Validate before saving
+        const validation = CSVParser.validate(csv);
+        if (!validation.isValid) {
+          UIRenderer.appendLine('<span class="warn">⚠ CSV VALIDATION WARNINGS:</span>');
+          validation.errors.forEach(err => {
+            UIRenderer.appendLine(`<span class="muted">  ${err}</span>`);
           });
         }
 
-        // --- LEGACY HISTORY PUSH (Keep for now or remove?) ---
-        // Plan said: "Update Export Logic to use internal state"
-        // So history is now secondary or redundant.
-        // But the UI (TraceTool) might rely on history for something else?
-        // `markHistoryComplete()` is now obsolete if we use `this.rows`.
+        const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5);
+        const filename = `TripCoil-${timestamp}.csv`;
 
-        // 3. Update Discovery Stack (THE COUNTDOWN)
-        // With Live CSV, do we still need discoveryStack?
-        // "Refresh UI... TraceTool to move to the next item in the discoveryStack"
-        // Yes, discoveryStack drives the *flow* (where we go next).
-        // But the *density* logic in discoveryStack is now redundant?
-        // User said: "Count number of rows... Use this count to populate the display."
-        // So we don't need manual density input if data exists.
-        // BUT logic for `processJump(count)` assumes manual density for new checks.
-        // Let's keep stack for circle-back flow.
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        a.click();
+        URL.revokeObjectURL(url);
 
-        // LEGACY STACK LOGIC (Keep for flow control)
-        const stackIdx = this.discoveryStack.findIndex(n =>
-          n.p === this.currentFrom.p && n.d === this.currentFrom.d && n.t === this.currentFrom.t
-        );
-
-        if (stackIdx !== -1) {
-          // We still decrement to pop it from stack when "done"
-          // Or should we check CSV status?
-          // "Move to next item... or clear [PENDING] list"
-          // If we decrement manually, we might de-sync from CSV.
-          // Better: Check if *any* status includes '?' for this terminal?
-          // But for now, let's keep the manual decrement to close the loop.
-          this.discoveryStack[stackIdx].count--;
-          if (this.discoveryStack[stackIdx].count <= 0) {
-            this.discoveryStack.splice(stackIdx, 1);
-          }
-        }
-
-        // 4. Handle "To" Terminal Logic (Next Step)
-        // Check if destination has pending wires in CSV?
-        // If yes, push to stack automatically?
-        // "Scaling: handles 100-line test runs effortlessly"
-        // If I jump to T2, and T2 has 5 pending wires in CSV, I should probably auto-push T2 to stack.
-        // Instead of asking "Density?".
-        // LET'S IMPLEMENT THAT AUTO-DENSITY CHECK.
-
-        let nextCount = toCount; // Default (if manual)
-
-        // Check CSV for destination
-        const destPending = this.rows.filter(r =>
-          r.type === 'WIR' &&
-          r.pan === this.inputs.toP &&
-          r.dev === this.inputs.toD &&
-          r.term === this.inputs.toT &&
-          r.status !== 'C'
-        );
-
-        if (destPending.length > 0) {
-          nextCount = destPending.length;
-        }
-
-        const toNode = {
-          p: this.inputs.toP,
-          d: this.inputs.toD,
-          t: this.inputs.toT,
-          count: nextCount,
-          total: nextCount // Can be revised based on CSV total
-        };
-
-        const lastMove = {
-          from: { p: this.currentFrom.p, d: this.currentFrom.d, t: this.currentFrom.t },
-          to: { p: this.inputs.toP, d: this.inputs.toD, t: this.inputs.toT }
-        };
-
-        if (nextCount > 0) {
-          // Push To Node to Discovery Stack
-          this.discoveryStack.push(toNode);
-
-          // Move forward
-          this.currentFrom = toNode;
-          setHeader(`📍    ${this.currentFrom.p} ${this.currentFrom.d} ${this.currentFrom.t}    📍`);
-          this.startDestinationPhase(); // Clears this.inputs
-        } else {
-          // Dead End -> Circle Back
-          this.circleBack();
-        }
-
-        // Set Last Verified
-        this.lastVerified = lastMove;
+        UIRenderer.appendLine(`<span class="success">✓ FILE SAVED: ${filename}</span>`);
       },
 
-      circleBack() {
-        if (this.discoveryStack.length > 0) {
-          // Pull most recent from Active Discovery Stack
-          const nextSrc = this.discoveryStack[this.discoveryStack.length - 1]; // Peek/Get
-          this.currentFrom = nextSrc;
-
-          // Update Header on Circle Back
-          setHeader(`📍    ${this.currentFrom.p} ${this.currentFrom.d} ${this.currentFrom.t}    📍`);
-
-          appendLine(`<div style="color:var(--accent)">↺ CIRCLING BACK TO: ${nextSrc.p} / ${nextSrc.d} / ${nextSrc.t} (${nextSrc.count} LEFT)</div>`);
-
-          this.startDestinationPhase();
-        } else {
-          // Session Complete
-          this.phase = this.PHASE.COMPLETE;
-          setHeader('SESSION COMPLETE', 'green');
-          appendLine('<div style="color:var(--warn)">NO PENDING WIRES - TRACE COMPLETE</div>');
-          appendLine('<div class="prompt">TYPE "EXPORT" TO SAVE CSV</div>');
-        }
-      },
-
-      render() {
-        let label = '';
-        const P = this.PHASE;
-
-        switch (this.phase) {
-          case P.SEED_PANEL: label = 'FROM PANEL?'; break;
-          case P.SEED_DEVICE: label = 'FROM DEVICE?'; break;
-          case P.SEED_TERMINAL: label = 'FROM TERMINAL?'; break;
-
-          case P.DEST_PANEL:
-            // "Take out the blue text that says FROM: ..."
-            label = 'TO PANEL:';
-            break;
-          case P.DEST_DEVICE: label = 'TO DEVICE?'; break;
-          case P.DEST_TERMINAL: label = 'TO TERMINAL?'; break;
-
-          case P.CALLBACK:
-            label = `FOUND WIRE ${this.currentFrom.p}/${this.currentFrom.d}/${this.currentFrom.t}? (Y/N)`;
-            break;
-
-          case P.DENSITY:
-            label = `<i>EXCLUDING ${this.currentFrom.p}/${this.currentFrom.d}/${this.currentFrom.t}...</i><br>HOW MANY WIRES ON<br>${this.inputs.toP}/${this.inputs.toD}/${this.inputs.toT}?`;
-            break;
-
-          case P.COMPLETE: label = 'COMPLETE (TYPE QUIT)'; break;
-        }
-
-        // If we are showing "TO PANEL", prepend the Physical Queue
-        if (this.phase === P.DEST_PANEL) {
-          const queueHtml = this.renderQueue();
-          if (queueHtml) {
-            // Pass as preContent to renderInput
-            renderInput(label, queueHtml);
-            return; // Initial render done
-          }
-        }
-
-        if (label) renderInput(label);
-      },
-
-      parseRows(csvText) {
-        if (!csvText) return [];
-        // Simple CSV Parser (assuming standard 14-col format)
-        // Header: ROW_TYPE, PANEL, DEVICE_TAG, TERMINAL, TERM_KIND, ELEM_ID, DEVICE_PART, TO_PANEL, TO_DEVICE, TO_TERMINAL, CABLE_ID, STATUS, SIGNAL_ID, REMARKS
-        return csvText.split('\n')
-          .map(line => line.trim())
-          .filter(line => line && !line.startsWith('#') && !line.startsWith('ROW_TYPE'))
-          .map(line => {
-            const cols = line.split(',').map(c => c.trim());
-            // Mapping to Object for easier access
-            return {
-              raw: line, // Note: raw might have spaces, but object properties are clean
-              type: cols[0],
-              pan: cols[1], dev: cols[2], term: cols[3],
-              kind: cols[4], elem: cols[5], part: cols[6],
-              to_pan: cols[7], to_dev: cols[8], to_term: cols[9],
-              cable: cols[10], status: cols[11], signal: cols[12], remarks: cols[13]
-            };
-          });
-      },
-
-      renderQueue() {
-        let out = '';
-
-        if (!this.currentFrom) return '';
-
-        const cur = this.currentFrom;
-        const cp = cur.p.toUpperCase();
-        const cd = cur.d.toUpperCase();
-        const ct = cur.t.toUpperCase();
-
-        // 1. Find ALL wires connected to this terminal (Bidirectional)
-        const relevantRows = this.rows.filter(r => {
-          if (r.type !== 'WIR') return false;
-
-          // Fallback to empty string for safety
-          const rp = (r.pan || '').toUpperCase();
-          const rd = (r.dev || '').toUpperCase();
-          const rt = (r.term || '').toUpperCase();
-          const rtp = (r.to_pan || '').toUpperCase();
-          const rtd = (r.to_dev || '').toUpperCase();
-          const rtt = (r.to_term || '').toUpperCase();
-
-          // Connected if current node matches EITHER end
-          const matchSource = (rp === cp && rd === cd && rt === ct);
-          const matchDest = (rtp === cp && rtd === cd && rtt === ct);
-
-          return matchSource || matchDest;
-        });
-
-        const verified = relevantRows.filter(r => r.status === 'C');
-        const pending = relevantRows.filter(r => r.status !== 'C');
-
-        // Helper to formatting the "Other End"
-        const fmtOther = (r) => {
-          const rp = (r.pan || '').toUpperCase();
-          const rd = (r.dev || '').toUpperCase();
-          const rt = (r.term || '').toUpperCase();
-          // If current Node is Source, return Dest. Else return Source.
-          if (rp === cp && rd === cd && rt === ct) {
-            return `${r.to_pan} ${r.to_dev} ${r.to_term}`;
-          } else {
-            return `${r.pan} ${r.dev} ${r.term}`;
-          }
-        };
-
-        // 2. Render Verified List
-        verified.forEach(r => {
-          // Using simple [ ✓ ] format
-          out += `<span class="ok">[ ✓ ] VERIFIED: ${fmtOther(r)}</span><br>`;
-        });
-
-        // 3. Render Pending List
-        pending.forEach((r, idx) => {
-          // Using [ ? ] format for pending
-          out += `<span class="muted">[ ? ] PENDING : ${fmtOther(r)}</span><br>`;
-        });
-
-        // 4. "Ghost" Wires (Manual Density > CSV Data)
-        let ghostCount = 0;
-        if (this.currentFrom.count !== undefined) {
-          ghostCount = this.currentFrom.count - pending.length;
-        }
-
-        if (ghostCount > 0) {
-          // Pending List Separator from Verified?
-          // Actually, we just want to append these after real pending.
-
-          // If we have verified but NO real pending, but YES ghosts, we need the separator.
-          // Or if we have real pending, separation logic is already handled by output flow?
-          // No, we haven't added the middle separator yet in this implementation.
-        }
-
-        // Let's redo the flow cleanly:
-        // A. Verified
-        // -- Separator if Verified and (Pending OR Ghosts) --
-        // B. Pending (Real + Ghosts)
-
-        const hasPending = (pending.length > 0 || ghostCount > 0);
-
-        if (verified.length > 0 && hasPending) {
-          out += '<span>----------------------------------------</span><br>';
-        }
-
-        // Render Real Pending (already in out var if we moved it?)
-        // Wait, I appended to `out` above. Let's restart building `out` to be safe/clean order.
-
-        // RESTART BUILD
-        let finalOut = '';
-        verified.forEach(r => {
-          finalOut += `<span class="ok">[ ✓ ] VERIFIED: ${fmtOther(r)}</span><br>`;
-        });
-
-        if (verified.length > 0 && hasPending) {
-          // Separator removed as per user request
-          finalOut += '<br>'; // Optional: Keep some spacing? User asked to get rid of lines. Let's just use BR for spacing.
-        }
-
-        pending.forEach((r, idx) => {
-          finalOut += `<span class="muted">[ ? ] PENDING : ${fmtOther(r)}</span><br>`;
-        });
-
-        if (ghostCount > 0) {
-          for (let i = 0; i < ghostCount; i++) {
-            finalOut += `<span class="muted">[ ? ] PENDING : WIRE ${pending.length + i + 1} (UNIDENTIFIED)</span><br>`;
-          }
-        }
-
-        // Final Separator before prompt removed
-        // if (finalOut) {
-        //   finalOut += '<span>----------------------------------------</span><br>';
-        // }
-
-        return finalOut;
+      load() {
+        DOM.fileInput.click();
       }
-
-
     };
 
-    // --- GLOBAL HANDLERS ---
+    // ========================================
+    // GLOBAL COMMANDS
+    // ========================================
 
-    function switchState(newState) {
-      currentState = newState;
-      if (newState === STATE_MENU) MenuTool.init();
-      if (newState === STATE_TRACE) TraceTool.init();
-    }
+    const GlobalCommands = {
+      handle(cmd) {
+        const normalizedCmd = normalize(cmd);
 
-    function showHelp() {
-      appendLine('<div style="color:var(--dim)">--- TERMINAL CHEATSHEET ---</div>');
-      appendLine('<div><span class="prompt">NAVIGATION:</span> Up/Down Arrow for Command History</div>');
-      appendLine('<div><span class="prompt">MOBILE:</span> Use virtual buttons (∧/∨) for history/undo</div>');
-      appendLine('<div><span class="prompt">DATA:</span> TYPE "CSV" (or EXPORT) for Data Interface</div>');
-      appendLine('<div><span class="prompt">PLOT:</span> TYPE "PLOT" (or PLOTTER) for Wiring Diagram</div>');
-      appendLine('<div><span class="prompt">FILE:</span> SAVE (Download CSV), LOAD (Open CSV)</div>');
-      appendLine('<div><span class="prompt">SYSTEM:</span> CLEAR, QUIT (or EXIT), HELP</div>');
-      appendLine('<div style="color:var(--dim)">---------------------------</div>');
-    }
+        if (normalizedCmd === 'QUIT' || normalizedCmd === 'EXIT') {
+          StateManager.setState(STATE.MENU);
+          MenuTool.init();
+          return true;
+        }
 
-    function openNotepad() {
-      // Generate CSV from LIVE rows if available, else usage history (fallback)
-      let content = '';
+        if (normalizedCmd === 'CLEAR' || normalizedCmd === 'CLS') {
+          UIRenderer.clearTerminal();
+          this.refreshUI();
+          return true;
+        }
 
-      if (currentState === STATE_TRACE && TraceTool.rows.length > 0) {
-        // Use the LIVE state (which has updated 'C' statuses)
-        // Reconstruct CSV from objects
-        const header = "ROW_TYPE, PANEL, DEVICE_TAG, TERMINAL, TERM_KIND, ELEM_ID, DEVICE_PART, TO_PANEL, TO_DEVICE, TO_TERMINAL, CABLE_ID, STATUS, SIGNAL_ID, REMARKS";
-        const rows = TraceTool.rows.map(r => {
-          // Rebuild line
-          // r.type, r.pan, r.dev, r.term, r.kind, r.elem, r.part, r.to_pan, r.to_dev, r.to_term, r.cable, r.status, r.signal, r.remarks
-          return `${r.type},${r.pan},${r.dev},${r.term},${r.kind || ''},${r.elem || ''},${r.part || ''},${r.to_pan || ''},${r.to_dev || ''},${r.to_term || ''},${r.cable || ''},${r.status || ''},${r.signal || ''},${r.remarks || ''}`;
-        });
-        content = header + '\n' + rows.join('\n');
-      } else if (currentState === STATE_TRACE && TraceTool.history.length > 0) {
-        // Fallback to legacy history if no rows loaded?
-        content = TraceTool.history.map(h => {
-          const status = h.status + (h.callsBack === 'N' ? '!' : '');
-          return `WIR,${h.from.p},${h.from.d},${h.from.t},,,,${h.to.p},${h.to.d},${h.to.t},,${status},,`;
-        }).join('\n');
+        if (normalizedCmd === 'HELP' || normalizedCmd === '?') {
+          this.showHelp();
+          this.refreshUI();
+          return true;
+        }
+
+        if (normalizedCmd === 'EXPORT' || normalizedCmd === 'TEXT' || normalizedCmd === 'CSV' || normalizedCmd === 'DATA') {
+          DataInterface.open();
+          return true;
+        }
+
+        if (normalizedCmd === 'PLOT' || normalizedCmd === 'PLOTTER') {
+          Plotter.show();
+          return true;
+        }
+
+        if (normalizedCmd === 'SAVE') {
+          DataInterface.save();
+          this.refreshUI();
+          return true;
+        }
+
+        if (normalizedCmd === 'LOAD') {
+          DataInterface.load();
+          return true;
+        }
+
+        return false;
+      },
+
+      showHelp() {
+        UIRenderer.appendLine('<div style="color:var(--dim);font-size:14px;margin:10px 0;">━━━ TERMINAL REFERENCE ━━━</div>');
+        UIRenderer.appendLine('<div><span class="prompt">NAVIGATION</span></div>');
+        UIRenderer.appendLine('  <span class="muted">↑/↓ Arrow Keys</span> → Command History');
+        UIRenderer.appendLine('  <span class="muted">∧/∨ Buttons</span> → Mobile History/Undo');
+        UIRenderer.appendLine('');
+        UIRenderer.appendLine('<div><span class="prompt">DATA OPERATIONS</span></div>');
+        UIRenderer.appendLine('  <span class="info">CSV</span> or <span class="info">EXPORT</span> → Open Data Interface');
+        UIRenderer.appendLine('  <span class="info">SAVE</span> → Download CSV (Ctrl+S)');
+        UIRenderer.appendLine('  <span class="info">LOAD</span> → Upload CSV (Ctrl+O)');
+        UIRenderer.appendLine('');
+        UIRenderer.appendLine('<div><span class="prompt">VISUALIZATION</span></div>');
+        UIRenderer.appendLine('  <span class="info">PLOT</span> or <span class="info">PLOTTER</span> → View Wiring Diagram');
+        UIRenderer.appendLine('');
+        UIRenderer.appendLine('<div><span class="prompt">SYSTEM</span></div>');
+        UIRenderer.appendLine('  <span class="info">CLEAR</span> → Clear Screen');
+        UIRenderer.appendLine('  <span class="info">QUIT</span> or <span class="info">EXIT</span> → Return to Menu');
+        UIRenderer.appendLine('  <span class="info">HELP</span> or <span class="info">?</span> → Show This Reference');
+        UIRenderer.appendLine('<div style="color:var(--dim);font-size:14px;margin:10px 0;">━━━━━━━━━━━━━━━━━━━━━━━</div>');
+      },
+
+      refreshUI() {
+        if (StateManager.currentState === STATE.MENU) MenuTool.render();
+        if (StateManager.currentState === STATE.TRACE) TraceTool.render();
       }
+    };
 
-      if (content) textArea.value = content;
+    // ========================================
+    // EVENT HANDLERS
+    // ========================================
 
-      overlay.style.display = 'flex';
-    }
+    const focus = () => DOM.ghost.focus();
 
-    function closeNotepad() {
-      overlay.style.display = 'none';
-      focus();
-    }
-
-    // Make global for onclick
-    window.closeNotepad = closeNotepad;
-
-    // --- EVENT LOOP ---
-    const focus = () => ghost.focus();
+    // Main click handler
     window.addEventListener('click', focus);
 
+    // Main keyboard handler
     window.addEventListener('keydown', (e) => {
-      if (overlay.style.display === 'flex') return; // Typing in notepad handled natively
-      focus();
-
-      if (e.key === 'Enter') {
-        const rawCmd = inputBuffer.trim();
-        const cmd = rawCmd.toUpperCase();
-
-        // Push to History
-        if (rawCmd) {
-          commandHistory.push(rawCmd);
-          historyIndex = -1;
-          tempInputBuffer = '';
+      // Don't intercept when typing in overlays
+      if (DOM.csvOverlay.style.display === 'flex' || DOM.plotterOverlay.style.display === 'flex') {
+        // Allow Escape to close overlays
+        if (e.key === 'Escape') {
+          DataInterface.close();
+          Plotter.close();
         }
-
-        // Global Commands
-        if (cmd === 'QUIT' || cmd === 'EXIT') {
-          inputBuffer = '';
-          switchState(STATE_MENU);
-          return;
-        }
-        if (cmd === 'CLEAR' || cmd === 'CLS') {
-          inputBuffer = '';
-          clearTerminal();
-          refreshUI(); // Re-render prompt
-          return;
-        }
-        if (cmd === 'HELP' || cmd === '?') {
-          inputBuffer = '';
-          showHelp();
-          // We don't return here because we want to stay in current state, just showed help.
-          // Actually showHelp appends lines. We should probably re-render prompt.
-          refreshUI();
-          return;
-        }
-        if (cmd === 'EXPORT' || cmd === 'TEXT' || cmd === 'CSV') {
-          inputBuffer = '';
-          openNotepad();
-          if (currentState === STATE_MENU) MenuTool.render();
-          if (currentState === STATE_TRACE) TraceTool.render();
-          return;
-        }
-
-        if (cmd === 'PLOT' || cmd === 'PLOTTER') {
-          inputBuffer = '';
-          Plotter.show();
-          return;
-        }
-
-        if (cmd === 'SAVE') {
-          commitInput('SAVE');
-          inputBuffer = '';
-          saveCSV();
-          refreshUI();
-          return;
-        }
-
-        if (cmd === 'LOAD') {
-          commitInput('LOAD');
-          inputBuffer = '';
-          fileInput.click();
-          // We don't refreshUI here immediately because the file dialog blocks, 
-          // and we want to wait for file selection or cancel.
-          // IF user cancels, we might need a way to restore prompt?
-          // For now, let's at least refreshUI so the prompt returns if they cancel.
-          refreshUI();
-          return;
-        }
-
-        // Route to Tool
-        inputBuffer = '';
-        if (currentState === STATE_MENU) {
-          MenuTool.handleInput(cmd);
-        } else if (currentState === STATE_TRACE) {
-          TraceTool.handleInput(cmd);
-        }
-
-        refreshUI();
-
-      } else if (e.key === 'ArrowUp') {
-        e.preventDefault();
-        if (currentState === STATE_TRACE) {
-          TraceTool.undo();
-        } else {
-          navigateHistory(-1);
-        }
-      } else if (e.key === 'ArrowDown') {
-        e.preventDefault();
-        // Down behavior undefined so left as history or no-op
-        if (currentState === STATE_MENU) navigateHistory(1);
-      } else if (e.key === 'Backspace') {
-        inputBuffer = inputBuffer.slice(0, -1);
-        refreshUI();
-      } else if (e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) {
-        inputBuffer += e.key.toUpperCase();
-        refreshUI();
-      }
-    });
-
-    function refreshUI() {
-      if (currentState === STATE_MENU) MenuTool.render();
-      if (currentState === STATE_TRACE) TraceTool.render();
-    }
-
-    // --- NOTEPAD BUTTONS ---
-    btnCopy.addEventListener('click', async () => {
-      try {
-        await navigator.clipboard.writeText(textArea.value);
-        // Visual feedback?
-        const originalText = btnCopy.textContent;
-        btnCopy.textContent = 'COPIED!';
-        setTimeout(() => btnCopy.textContent = originalText, 1000);
-      } catch (err) {
-        console.error('Copy failed', err);
-      }
-    });
-
-    btnPaste.addEventListener('click', async () => {
-      try {
-        let text = await navigator.clipboard.readText();
-        // Heuristic: Auto-format collapsed "Space WIR," into Newlines
-        text = text.replace(/(\s)WIR,/g, '\nWIR,');
-
-        // Overwrite usage
-        textArea.value = text;
-        textArea.focus();
-      } catch (err) {
-        console.error('Paste failed', err);
-      }
-    });
-
-    // --- PLOTTER EVENTS ---
-    btnPlotCopy.addEventListener('click', async () => {
-      try {
-        await navigator.clipboard.writeText(plotterContent.innerText);
-        const originalText = btnPlotCopy.textContent;
-        btnPlotCopy.textContent = 'COPIED!';
-        setTimeout(() => btnPlotCopy.textContent = originalText, 1000);
-      } catch (err) {
-        console.error('Copy failed', err);
-      }
-    });
-
-    btnPlotPrint.addEventListener('click', () => {
-      const printWindow = window.open('', '', 'width=800,height=600');
-      printWindow.document.write('<html><head><title>Wiring Diagram</title>');
-      printWindow.document.write('<style>body{font-family:Consolas,monospace;white-space:pre;font-size:12px;}</style>');
-      printWindow.document.write('</head><body>');
-      printWindow.document.write(plotterContent.innerHTML); // Preserves colors? Colors need classes.
-      // We need to inject the styles too if we want colors. 
-      // User asked for "clean .txt". Colors might consume ink. 
-      // If clean .txt means "black and white", I strip tags. 
-      // But usually "print" implies WYSIWYG. 
-      // Let's print clean TEXT (no colors) as "clean .txt" implies plainness.
-      // Actually, keeping structure is key. 
-      // Let's enable colors but keep it minimal.
-      // Re-injecting simple styles.
-      printWindow.document.write('<style>.ok{color:black}.warn{color:black}.bad{color:black}.muted{color:gray}</style>');
-      // Wait, user might want color. "Clean .txt" implies structure. 
-      // Let's strip the HTML tags for TRUE text print? 
-      // No, then we lose the bolding/dimming useful for readability.
-      // I will provide a black-and-white cleaned version.
-      printWindow.document.write('</body></html>');
-      printWindow.document.close();
-      printWindow.focus();
-      printWindow.print();
-      printWindow.close();
-    });
-
-    // --- FILE OPERATIONS ---
-    function saveCSV() {
-      let csv = '';
-      if (currentState === STATE_TRACE && TraceTool.rows.length > 0) {
-        // Export LIVE state
-        const header = "ROW_TYPE, PANEL, DEVICE_TAG, TERMINAL, TERM_KIND, ELEM_ID, DEVICE_PART, TO_PANEL, TO_DEVICE, TO_TERMINAL, CABLE_ID, STATUS, SIGNAL_ID, REMARKS";
-        const rows = TraceTool.rows.map(r => {
-          return `${r.type},${r.pan},${r.dev},${r.term},${r.kind || ''},${r.elem || ''},${r.part || ''},${r.to_pan || ''},${r.to_dev || ''},${r.to_term || ''},${r.cable || ''},${r.status || ''},${r.signal || ''},${r.remarks || ''}`;
-        });
-        csv = header + '\n' + rows.join('\n');
-      } else if (currentState === STATE_TRACE && TraceTool.history.length > 0) {
-        // Generate CSV from history if active trace exists (Fallback)
-        csv = TraceTool.history.map(h => {
-          const status = h.status + (h.callsBack === 'N' ? '!' : '');
-          return `WIR,${h.from.p},${h.from.d},${h.from.t},,,,${h.to.p},${h.to.d},${h.to.t},,${status},,`;
-        }).join('\n');
-      } else {
-        // Otherwise use Notepad content
-        csv = textArea.value;
-      }
-
-      if (!csv) {
-        appendLine('<span class="warn">NO DATA TO SAVE</span>');
         return;
       }
 
-      const blob = new Blob([csv], { type: 'text/csv' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'TC-Export.csv';
-      a.click();
-      URL.revokeObjectURL(url);
-      appendLine('<span class="ok">FILE SAVED: TC-Export.csv</span>');
-    }
+      focus();
 
-    fileInput.addEventListener('change', (e) => {
+      // Handle keyboard shortcuts
+      if (e.ctrlKey || e.metaKey) {
+        if (e.key === 's' || e.key === 'S') {
+          e.preventDefault();
+          DataInterface.save();
+          return;
+        } else if (e.key === 'o' || e.key === 'O') {
+          e.preventDefault();
+          DataInterface.load();
+          return;
+        } else if (e.key === 'l' || e.key === 'L') {
+          e.preventDefault();
+          UIRenderer.clearTerminal();
+          GlobalCommands.refreshUI();
+          return;
+        }
+      }
+
+      // Handle special keys
+      if (e.key === 'Enter') {
+        const rawCmd = StateManager.inputBuffer.trim();
+        const cmd = normalize(rawCmd);
+
+        if (rawCmd) StateManager.addToHistory(rawCmd);
+        StateManager.inputBuffer = '';
+
+        // Try global commands first
+        if (GlobalCommands.handle(cmd)) return;
+
+        // Route to active tool
+        if (StateManager.currentState === STATE.MENU) {
+          MenuTool.handleInput(cmd);
+        } else if (StateManager.currentState === STATE.TRACE) {
+          TraceTool.handleInput(cmd);
+        }
+
+        GlobalCommands.refreshUI();
+
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        if (StateManager.currentState === STATE.TRACE) {
+          TraceTool.undo();
+        } else {
+          StateManager.navigateHistory(-1);
+          GlobalCommands.refreshUI();
+        }
+
+      } else if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        if (StateManager.currentState === STATE.MENU) {
+          StateManager.navigateHistory(1);
+          GlobalCommands.refreshUI();
+        }
+
+      } else if (e.key === 'Backspace') {
+        e.preventDefault();
+        StateManager.inputBuffer = StateManager.inputBuffer.slice(0, -1);
+        GlobalCommands.refreshUI();
+
+      } else if (e.key === 'Escape') {
+        DataInterface.close();
+        Plotter.close();
+
+      } else if (e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        StateManager.inputBuffer += e.key.toUpperCase();
+        GlobalCommands.refreshUI();
+      }
+    });
+
+    // Mobile controls
+    DOM.btnUp.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (StateManager.currentState === STATE.TRACE) {
+        TraceTool.undo();
+      } else {
+        StateManager.navigateHistory(-1);
+        GlobalCommands.refreshUI();
+      }
+      focus();
+    });
+
+    DOM.btnDown.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (StateManager.currentState === STATE.MENU) {
+        StateManager.navigateHistory(1);
+        GlobalCommands.refreshUI();
+      }
+      focus();
+    });
+
+    // CSV interface buttons
+    DOM.btnCopy.addEventListener('click', async () => {
+      try {
+        await navigator.clipboard.writeText(DOM.csvTextarea.value);
+        const originalText = DOM.btnCopy.textContent;
+        DOM.btnCopy.textContent = '✓ COPIED';
+        setTimeout(() => DOM.btnCopy.textContent = originalText, 1500);
+      } catch (err) {
+        console.error('Copy failed', err);
+        DOM.btnCopy.textContent = '✗ FAILED';
+        setTimeout(() => DOM.btnCopy.textContent = 'COPY', 1500);
+      }
+    });
+
+    DOM.btnPaste.addEventListener('click', async () => {
+      try {
+        let text = await navigator.clipboard.readText();
+        text = text.replace(/(\s)WIR,/g, '\nWIR,');
+        DOM.csvTextarea.value = text;
+        DOM.csvTextarea.focus();
+        
+        const originalText = DOM.btnPaste.textContent;
+        DOM.btnPaste.textContent = '✓ PASTED';
+        setTimeout(() => DOM.btnPaste.textContent = originalText, 1500);
+      } catch (err) {
+        console.error('Paste failed', err);
+        DOM.btnPaste.textContent = '✗ FAILED';
+        setTimeout(() => DOM.btnPaste.textContent = 'PASTE', 1500);
+      }
+    });
+
+    DOM.btnSave.addEventListener('click', () => DataInterface.save());
+    DOM.btnLoad.addEventListener('click', () => DataInterface.load());
+    DOM.csvClose.addEventListener('click', () => DataInterface.close());
+
+    // Plotter buttons
+    DOM.btnPlotCopy.addEventListener('click', async () => {
+      try {
+        await navigator.clipboard.writeText(DOM.plotterContent.innerText);
+        const originalText = DOM.btnPlotCopy.textContent;
+        DOM.btnPlotCopy.textContent = '✓ COPIED';
+        setTimeout(() => DOM.btnPlotCopy.textContent = originalText, 1500);
+      } catch (err) {
+        console.error('Copy failed', err);
+        DOM.btnPlotCopy.textContent = '✗ FAILED';
+        setTimeout(() => DOM.btnPlotCopy.textContent = 'COPY', 1500);
+      }
+    });
+
+    DOM.btnPlotPrint.addEventListener('click', () => {
+      const printWindow = window.open('', '', 'width=900,height=700');
+      printWindow.document.write(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <title>TripCoil Wiring Diagram - ${new Date().toLocaleDateString()}</title>
+          <style>
+            @page { margin: 1cm; }
+            body {
+              font-family: 'Consolas', 'Courier New', monospace;
+              white-space: pre;
+              font-size: 10pt;
+              line-height: 1.4;
+              color: #000;
+            }
+            .ok { color: #000; font-weight: bold; }
+            .warn { color: #000; text-decoration: underline; }
+            .error { color: #000; font-style: italic; }
+            .muted { color: #666; }
+            strong { font-weight: bold; }
+          </style>
+        </head>
+        <body>
+          <h3>TripCoil Terminal - Wiring Diagram</h3>
+          <p>Generated: ${new Date().toLocaleString()}</p>
+          <hr>
+          ${DOM.plotterContent.innerHTML}
+        </body>
+        </html>
+      `);
+      printWindow.document.close();
+      printWindow.focus();
+      
+      setTimeout(() => {
+        printWindow.print();
+        printWindow.close();
+      }, 250);
+    });
+
+    DOM.plotterClose.addEventListener('click', () => Plotter.close());
+
+    // File input handler
+    DOM.fileInput.addEventListener('change', (e) => {
       const file = e.target.files[0];
       if (!file) return;
 
       const reader = new FileReader();
       reader.onload = (event) => {
         const content = event.target.result;
-        // Auto-fix for space WIR if needed, similar to paste
         const fixedContent = content.replace(/(\s)WIR,/g, '\nWIR,');
-
-        textArea.value = fixedContent;
-        appendLine(`<span class="ok">FILE LOADED: ${file.name}</span>`);
-
-        // Clear input so same file can be loaded again if needed
-        fileInput.value = '';
-
-        refreshUI(); // Ensure fresh prompt appears
+        
+        // Validate before loading
+        const validation = CSVParser.validate(fixedContent);
+        
+        DOM.csvTextarea.value = fixedContent;
+        
+        if (validation.isValid) {
+          UIRenderer.appendLine(`<span class="success">✓ FILE LOADED: ${file.name}</span>`);
+        } else {
+          UIRenderer.appendLine(`<span class="warn">⚠ FILE LOADED WITH WARNINGS: ${file.name}</span>`);
+          validation.errors.slice(0, 3).forEach(err => {
+            UIRenderer.appendLine(`<span class="muted">  ${err}</span>`);
+          });
+        }
+        
+        DOM.fileInput.value = '';
+        GlobalCommands.refreshUI();
       };
+      
+      reader.onerror = () => {
+        UIRenderer.appendLine(`<span class="error">✗ FILE READ ERROR</span>`);
+        DOM.fileInput.value = '';
+      };
+      
       reader.readAsText(file);
     });
 
-    // --- INIT ---
-    switchState(STATE_MENU);
+    // ========================================
+    // INITIALIZATION
+    // ========================================
+
+    // Prevent accidental page closure
+    window.addEventListener('beforeunload', (e) => {
+      if (StateManager.currentState === STATE.TRACE && TraceTool.rows.length > 0) {
+        e.preventDefault();
+        e.returnValue = 'You have unsaved trace data. Are you sure you want to leave?';
+        return e.returnValue;
+      }
+    });
+
+    // Initialize application
+    MenuTool.init();
   </script>
 </body>
 
