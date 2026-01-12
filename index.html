@@ -117,7 +117,7 @@
       display: inline-flex;
       align-items: center;
       gap: 0;
-      min-height: 1.2em;
+      min-height: 1.6em;
       vertical-align: bottom;
     }
 
@@ -201,11 +201,16 @@
       overflow: auto;
       white-space: pre;
       margin: 0;
-      line-height: 1.5;
+      line-height: 1.2;
     }
 
     textarea.overlay-content {
       background: #fafafa;
+    }
+
+    .tree-line {
+      display: inline-block;
+      transform: scaleY(1.2);
     }
 
     .toolbar {
@@ -314,6 +319,7 @@
 
     /* Print-specific styles */
     @media print {
+
       .overlay-header,
       .btn,
       .overlay-close {
@@ -354,7 +360,8 @@
         </div>
         <div class="overlay-close" id="csv-close">✕</div>
       </div>
-      <textarea class="overlay-content" id="csv-textarea" placeholder="Paste CSV data here or load a file..."></textarea>
+      <textarea class="overlay-content" id="csv-textarea"
+        placeholder="Paste CSV data here or load a file..."></textarea>
     </div>
 
     <!-- Plotter Overlay -->
@@ -649,7 +656,7 @@
             .filter(line => line && !line.startsWith('#') && !normalize(line).startsWith('ROW_TYPE'))
             .map(line => {
               const cols = line.split(',').map(c => c.trim());
-              
+
               if (cols.length < 14) {
                 console.warn('Skipping malformed row:', line);
                 return null;
@@ -1383,7 +1390,7 @@
           node.connections.forEach((conn, idx) => {
             const isLast = idx === node.connections.length - 1;
             const branch = isLast ? '└── ' : '├── ';
-            html += `${prefix}${branch}<span class="${conn.status}">${conn.label}</span>\n`;
+            html += `<span class="tree-line">${prefix}${branch}</span><span class="${conn.status}">${conn.label}</span>\n`;
 
             if (nodes.has(conn.key)) {
               const newPrefix = prefix + (isLast ? '    ' : '│   ');
@@ -1680,7 +1687,7 @@
         text = text.replace(/(\s)WIR,/g, '\nWIR,');
         DOM.csvTextarea.value = text;
         DOM.csvTextarea.focus();
-        
+
         const originalText = DOM.btnPaste.textContent;
         DOM.btnPaste.textContent = '✓ PASTED';
         setTimeout(() => DOM.btnPaste.textContent = originalText, 1500);
@@ -1710,43 +1717,67 @@
     });
 
     DOM.btnPlotPrint.addEventListener('click', () => {
-      const printWindow = window.open('', '', 'width=900,height=700');
-      printWindow.document.write(`
-        <!DOCTYPE html>
-        <html>
-        <head>
-          <title>TripCoil Wiring Diagram - ${new Date().toLocaleDateString()}</title>
-          <style>
-            @page { margin: 1cm; }
-            body {
-              font-family: 'Consolas', 'Courier New', monospace;
-              white-space: pre;
-              font-size: 10pt;
-              line-height: 1.4;
-              color: #000;
-            }
-            .ok { color: #000; font-weight: bold; }
-            .warn { color: #000; text-decoration: underline; }
-            .error { color: #000; font-style: italic; }
-            .muted { color: #666; }
-            strong { font-weight: bold; }
-          </style>
-        </head>
-        <body>
-          <h3>TripCoil Terminal - Wiring Diagram</h3>
-          <p>Generated: ${new Date().toLocaleString()}</p>
-          <hr>
-          ${DOM.plotterContent.innerHTML}
-        </body>
-        </html>
-      `);
-      printWindow.document.close();
-      printWindow.focus();
-      
-      setTimeout(() => {
-        printWindow.print();
-        printWindow.close();
-      }, 250);
+      const content = DOM.plotterContent.innerHTML;
+      if (!content || content.trim() === '') return;
+
+      const timestamp = new Date().toLocaleString();
+      const filename = `TripCoil-Diagram-${new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5)}.html`;
+
+      const htmlOutput = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>TripCoil Wiring Diagram</title>
+  <style>
+    :root {
+      --bg: #05080a;
+      --fg: #b8ffe1;
+      --dim: #67d7b3;
+      --accent: #19ff9a;
+      --warn: #ffd36a;
+      --error: #ff5f57;
+      --success: #28c840;
+    }
+    body {
+      background-color: var(--bg);
+      color: var(--fg);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      padding: 20px;
+      line-height: 1.2;
+    }
+    pre {
+      white-space: pre;
+      margin: 0;
+      font-size: 13px;
+    }
+    .tree-line { display: inline-block; transform: scaleY(1.2); }
+    .ok { color: var(--success); font-weight: 600; }
+    .warn { color: var(--warn); font-weight: 600; }
+    .error { color: var(--error); font-weight: 600; }
+    .muted { color: var(--dim); opacity: 0.7; }
+    strong { color: var(--accent); font-weight: 700; }
+    h3 { color: var(--accent); margin-top: 0; border-bottom: 1px solid var(--dim); padding-bottom: 10px; }
+    .meta { color: var(--dim); font-size: 0.9em; margin-bottom: 20px; }
+  </style>
+</head>
+<body>
+  <h3>TRIPCOIL TERMINAL - WIRING DIAGRAM</h3>
+  <div class="meta">GENERATED: ${timestamp}</div>
+  <pre>${content}</pre>
+</body>
+</html>`;
+
+      const blob = new Blob([htmlOutput], { type: 'text/html;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      a.click();
+      URL.revokeObjectURL(url);
+
+      const originalText = DOM.btnPlotPrint.textContent;
+      DOM.btnPlotPrint.textContent = '✓ EXPORTED';
+      setTimeout(() => DOM.btnPlotPrint.textContent = originalText, 1500);
     });
 
     DOM.plotterClose.addEventListener('click', () => Plotter.close());
@@ -1760,12 +1791,12 @@
       reader.onload = (event) => {
         const content = event.target.result;
         const fixedContent = content.replace(/(\s)WIR,/g, '\nWIR,');
-        
+
         // Validate before loading
         const validation = CSVParser.validate(fixedContent);
-        
+
         DOM.csvTextarea.value = fixedContent;
-        
+
         if (validation.isValid) {
           UIRenderer.appendLine(`<span class="success">✓ FILE LOADED: ${file.name}</span>`);
         } else {
@@ -1774,16 +1805,16 @@
             UIRenderer.appendLine(`<span class="muted">  ${err}</span>`);
           });
         }
-        
+
         DOM.fileInput.value = '';
         GlobalCommands.refreshUI();
       };
-      
+
       reader.onerror = () => {
         UIRenderer.appendLine(`<span class="error">✗ FILE READ ERROR</span>`);
         DOM.fileInput.value = '';
       };
-      
+
       reader.readAsText(file);
     });
 
