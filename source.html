@@ -1,0 +1,1168 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TripCoil Documentation</title>
+    <!-- Inter Font -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
+        rel="stylesheet">
+    <!-- Meridian.js for diagrams -->
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+    <!-- Prism.js for syntax highlighting -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+    <style>
+        :root {
+            /* Optimized Dark Theme Palette */
+            --bg-body: #0b1120;
+            /* Darker, deeper blue-black */
+            --bg-sidebar: #111827;
+            /* Distinct sidebar */
+            --bg-code: #1f2937;
+            /* Lighter code blocks for contrast */
+            --bg-card: #1e293b;
+            /* For callouts/details */
+
+            --text-primary: #f1f5f9;
+            /* Brighter white for main text */
+            --text-secondary: #94a3b8;
+            /* Muted text */
+            --text-muted: #64748b;
+            /* Even more muted */
+
+            --accent: #38bdf8;
+            /* Sky blue accent */
+            --accent-hover: #0ea5e9;
+
+            --border: #334155;
+            /* Subtle borders */
+
+            /* Revised Alert Colors (More subtle backgrounds, clear borders) */
+            --alert-tip-bg: rgba(14, 165, 233, 0.1);
+            --alert-tip-border: #0ea5e9;
+
+            --alert-note-bg: rgba(59, 130, 246, 0.1);
+            --alert-note-border: #3b82f6;
+
+            --alert-warn-bg: rgba(245, 158, 11, 0.1);
+            --alert-warn-border: #f59e0b;
+
+            --alert-safe-bg: rgba(16, 185, 129, 0.1);
+            --alert-safe-border: #10b981;
+
+            --alert-caution-bg: rgba(239, 68, 68, 0.1);
+            --alert-caution-border: #ef4444;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-body);
+            color: var(--text-primary);
+            line-height: 1.7;
+            /* Improvements readability */
+            margin: 0;
+            display: flex;
+        }
+
+        /* Sidebar Navigation */
+        nav {
+            width: 300px;
+            height: 100vh;
+            background-color: var(--bg-sidebar);
+            border-right: 1px solid var(--border);
+            position: fixed;
+            overflow-y: auto;
+            padding: 2rem 1.5rem;
+            box-sizing: border-box;
+            z-index: 10;
+        }
+
+        nav h3 {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--text-muted);
+            margin-bottom: 1.5rem;
+            margin-top: 0;
+            font-weight: 700;
+        }
+
+        nav ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        nav li {
+            margin-bottom: 0.25rem;
+        }
+
+        nav a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+            display: block;
+            padding: 0.5rem 0.75rem;
+            border-radius: 6px;
+            margin-left: -0.75rem;
+            /* Optical alignment */
+        }
+
+        nav a:hover {
+            color: var(--text-primary);
+            background-color: rgba(255, 255, 255, 0.05);
+        }
+
+        nav a.active {
+            color: var(--accent);
+            font-weight: 600;
+            background-color: rgba(56, 189, 248, 0.1);
+        }
+
+        /* Main Content Container */
+        main {
+            margin-left: 300px;
+            /* Offset for sidebar */
+            padding: 4rem 6rem;
+            width: 100%;
+            max-width: 1600px;
+            /* INCREASED from 900px for large screens */
+            background-image: radial-gradient(circle at top right, rgba(56, 189, 248, 0.03), transparent 400px);
+        }
+
+        h1 {
+            font-size: 3rem;
+            font-weight: 800;
+            margin-bottom: 1.5rem;
+            letter-spacing: -0.03em;
+            background: linear-gradient(to right, #f8fafc, #94a3b8);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        h2 {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-top: 5rem;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border);
+            color: var(--text-primary);
+            scroll-margin-top: 4rem;
+        }
+
+        h3 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-top: 3rem;
+            margin-bottom: 1rem;
+            color: var(--text-primary);
+        }
+
+        h4 {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-top: 2rem;
+            margin-bottom: 0.75rem;
+            color: var(--accent);
+        }
+
+        p,
+        li {
+            color: var(--text-secondary);
+            margin-bottom: 1.25rem;
+            font-size: 1.05rem;
+            /* Slightly larger text for reading */
+        }
+
+        a {
+            color: var(--accent);
+            text-decoration: none;
+            border-bottom: 1px solid transparent;
+            transition: border-color 0.2s;
+        }
+
+        a:hover {
+            border-bottom-color: var(--accent);
+            text-decoration: none;
+        }
+
+        strong {
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+
+        /* Images / Badges */
+        img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+
+        .badges img {
+            margin-right: 0.5rem;
+            margin-bottom: 1rem;
+            box-shadow: none;
+        }
+
+        /* Code Blocks */
+        pre {
+            background-color: var(--bg-code) !important;
+            border-radius: 8px;
+            padding: 1.5rem !important;
+            border: 1px solid var(--border);
+            margin: 2rem 0;
+            overflow-x: auto;
+            box-shadow: inset 0 2px 4px 0 rgba(0, 0, 0, 0.05);
+        }
+
+        code {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.95em;
+        }
+
+        /* Inline Code */
+        p code,
+        li code {
+            background-color: rgba(255, 255, 255, 0.1);
+            padding: 0.2em 0.4em;
+            border-radius: 4px;
+            font-size: 0.85em;
+            color: var(--text-primary);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        /* Callouts / Alerts */
+        .callout {
+            padding: 1.5rem;
+            border-left: 4px solid;
+            background-color: var(--bg-card);
+            /* Card bg instead of simple transparency */
+            border-radius: 0 8px 8px 0;
+            margin: 2rem 0;
+            position: relative;
+        }
+
+        /* Subtle label coloring for callout headers */
+        .callout strong {
+            display: inline-block;
+            margin-bottom: 0.75rem;
+            color: var(--text-primary);
+            font-size: 1.1em;
+        }
+
+        .callout-note {
+            background: linear-gradient(to right, var(--alert-note-bg), var(--bg-body));
+            border-color: var(--alert-note-border);
+        }
+
+        .callout-tip {
+            background: linear-gradient(to right, var(--alert-tip-bg), var(--bg-body));
+            border-color: var(--alert-tip-border);
+        }
+
+        .callout-warning {
+            background: linear-gradient(to right, var(--alert-warn-bg), var(--bg-body));
+            border-color: var(--alert-warn-border);
+        }
+
+        .callout-important {
+            background: linear-gradient(to right, var(--alert-safe-bg), var(--bg-body));
+            border-color: var(--alert-safe-border);
+        }
+
+        .callout-caution {
+            background: linear-gradient(to right, var(--alert-caution-bg), var(--bg-body));
+            border-color: var(--alert-caution-border);
+        }
+
+        /* Tables / Lists */
+        details {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+        }
+
+        summary {
+            cursor: pointer;
+            font-weight: 600;
+            color: var(--accent);
+            list-style: none;
+            display: flex;
+            align-items: center;
+        }
+
+        summary::-webkit-details-marker {
+            display: none;
+        }
+
+        summary::before {
+            content: "▶";
+            display: inline-block;
+            margin-right: 0.75rem;
+            font-size: 0.8rem;
+            transition: transform 0.2s;
+            color: var(--text-secondary);
+        }
+
+        details[open] summary::before {
+            transform: rotate(90deg);
+            color: var(--accent);
+        }
+
+        /* Mermaid Diagrams Container */
+        .mermaid {
+            background-color: var(--bg-card);
+            padding: 2.5rem;
+            border-radius: 8px;
+            margin: 3rem 0;
+            text-align: center;
+            border: 1px solid var(--border);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 10px;
+            height: 10px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--bg-body);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--border);
+            border-radius: 5px;
+            border: 2px solid var(--bg-body);
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--text-secondary);
+        }
+
+        hr {
+            border: 0;
+            border-top: 1px solid var(--border);
+            margin: 4rem 0;
+        }
+
+        /* Data Tables */
+        table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            margin: 2rem 0;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        th,
+        td {
+            text-align: left;
+            padding: 1rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        th {
+            background-color: var(--bg-sidebar);
+            color: var(--text-primary);
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        tr:hover td {
+            background-color: rgba(255, 255, 255, 0.02);
+        }
+    </style>
+</head>
+
+<body>
+
+    <nav>
+        <h3>Documentation</h3>
+        <ul>
+            <li><a href="#intro">Introduction</a></li>
+            <li><a href="#quickstart">🚀 Quickstart</a></li>
+            <li><a href="#how-it-works">⚡ How TripCoil Works</a></li>
+            <li><a href="#using-terminal">🖥️ Using The Terminal</a></li>
+            <li><a href="#dev">📦 1 — Device (DEV)</a></li>
+            <li><a href="#term">🔌 1 — Device (TERM)</a></li>
+            <li><a href="#wir">🔗 1 — Device (WIR)</a></li>
+            <li><a href="#net">📡 1 — Device (NET)</a></li>
+            <li><a href="#pan">🗄️ 2 — Panel (PAN)</a></li>
+            <li><a href="#tag">🏷️ 3 — Device Tag</a></li>
+            <li><a href="#term-def">📍 4 — Terminal ID</a></li>
+            <li><a href="#kind">🧬 5 — Terminal Kind</a></li>
+            <li><a href="#elem">🔗 6 — Element ID</a></li>
+            <li><a href="#part">📑 7 — Device Part</a></li>
+            <li><a href="#to-panel">🚪 8 — To Panel</a></li>
+            <li><a href="#to-device">🎯 9 — To Device</a></li>
+            <li><a href="#to-term">📌 10 — To Terminal</a></li>
+            <li><a href="#cable">🧵 11 — Cable ID</a></li>
+            <li><a href="#status">🚦 12 — Status</a></li>
+            <li><a href="#signal">📶 13 — Signal ID</a></li>
+            <li><a href="#remarks">📝 14 — Remarks</a></li>
+        </ul>
+    </nav>
+
+    <main>
+        <section id="intro">
+            <h1>TripCoil</h1>
+            <div class="badges">
+                <img src="https://img.shields.io/badge/Status-Living%20Spec-success" alt="Status">
+                <img src="https://img.shields.io/badge/Documentation-TC--S-blue" alt="Documentation">
+                <img src="https://img.shields.io/badge/Platform-Substation%20Engineering-orange" alt="Platform">
+            </div>
+
+            <p>TripCoil is a wiring-truth system for substations.</p>
+            <p>It replaces tribal knowledge, redlines, and broken CAD files with a single source of truth that can:</p>
+            <ul>
+                <li>Generate schematics</li>
+                <li>Track terminal-level wiring</li>
+                <li>Validate signal paths</li>
+                <li>Survive field changes</li>
+            </ul>
+
+            <table>
+                <tr>
+                    <th>Old World</th>
+                    <th>TripCoil</th>
+                </tr>
+                <tr>
+                    <td>Redline prints</td>
+                    <td>STATUS + WIR</td>
+                </tr>
+                <tr>
+                    <td>Wire lists</td>
+                    <td>TripCoil-Terminal</td>
+                </tr>
+                <tr>
+                    <td>CAD schematics</td>
+                    <td>TripCoil-Plotter</td>
+                </tr>
+                <tr>
+                    <td>Tribal knowledge</td>
+                    <td>REMARKS + TERM</td>
+                </tr>
+            </table>
+
+            <div class="callout callout-tip">
+                <strong>💡 Cheatsheet: The 14-Column Header</strong>
+                <details>
+                    <summary>Click to expand</summary>
+                    <pre><code class="language-csv">ROW_TYPE, PANEL, DEVICE_TAG, TERMINAL, TERM_KIND, ELEM_ID, DEVICE_PART, TO_PANEL, TO_DEVICE, TO_TERMINAL, CABLE_ID, STATUS, SIGNAL_ID, REMARKS</code></pre>
+                </details>
+            </div>
+        </section>
+
+        <section id="quickstart">
+            <h2>🚀 First 5 Minutes — Your First TripCoil File</h2>
+            <p>How do I start a real substation with this? Follow these steps:</p>
+            <ol>
+                <li>Create a CSV with the 14-column header.</li>
+                <li>Add one <code>PAN</code> row.</li>
+                <li>Add one <code>DEV</code> row.</li>
+                <li>Add two <code>TERM</code> rows.</li>
+                <li>Add one <code>WIR</code> row.</li>
+            </ol>
+
+            <pre><code class="language-csv">ROW_TYPE,PANEL,DEVICE_TAG,TERMINAL,TERM_KIND,ELEM_ID,DEVICE_PART,TO_PANEL,TO_DEVICE,TO_TERMINAL,CABLE_ID,STATUS,SIGNAL_ID,REMARKS
+PAN,1A,,,,,,,,,,,Main relay panel
+DEV,1A,AA,,,,SEL-421,,,,,,Main relay
+TERM,1A,AA,OUT101,CONTACT,TRIP_A,,,,,,TRIP,Trip output
+TERM,1A,AA,Z01,CT,IA,,,,,,IA,Phase A CT
+WIR,1A,AA,OUT101,,, ,1A,TB1,12,C01,C,TRIP,Trip to breaker</code></pre>
+        </section>
+
+        <section id="how-it-works">
+            <h2>⚡ How TripCoil Works</h2>
+
+            <h3>What is a Row?</h3>
+            <p>A TripCoil CSV is not a table — it is a graph. Each row describes either a <strong>thing</strong> (PAN,
+                DEV, TERM) or a <strong>connection</strong> (WIR, NET).</p>
+
+            <div class="mermaid">
+                graph LR
+                D1[DEV] --- T1[TERM]
+                T1 --- W[WIR]
+                W --- T2[TERM]
+                T2 --- D2[DEV]
+
+                T1 -.- N[NET] -.- T2
+                style D1 fill:#f9f,stroke:#333
+                style D2 fill:#f9f,stroke:#333
+                style T1 fill:#9cf,stroke:#333
+                style T2 fill:#9cf,stroke:#333
+                style W fill:#ff9,stroke:#333
+                style N fill:#fff,stroke:#333,stroke-dasharray: 5 5
+            </div>
+
+            <div class="mermaid">
+                graph TD
+                CSV[CSV TripCoil-Source] -->|Defines| TERM[TripCoil-Terminal<br>Field Truth]
+                CSV -->|Defines| PLOT[TripCoil-Plotter<br>Schematics]
+                style CSV fill:#f96,stroke:#333,stroke-width:2px
+                style TERM fill:#9cf,stroke:#333,stroke-width:1px
+                style PLOT fill:#9cf,stroke:#333,stroke-width:1px
+            </div>
+
+            <h3>Field Reality vs Design Intent</h3>
+            <table>
+                <tr>
+                    <th>Column</th>
+                    <th>Represents</th>
+                </tr>
+                <tr>
+                    <td><strong>TERM</strong></td>
+                    <td>What should exist (Design Intent)</td>
+                </tr>
+                <tr>
+                    <td><strong>WIR</strong></td>
+                    <td>What actually exists (Physical Reality)</td>
+                </tr>
+                <tr>
+                    <td><strong>STATUS</strong></td>
+                    <td>How far reality matches design (Verification)</td>
+                </tr>
+            </table>
+
+            <h4>Core Row Types (ROW_TYPE)</h4>
+            <p>The power of TC-S lies in its five primary row discriminators:</p>
+            <ul>
+                <li><strong>PAN (Panel)</strong>: Defines the physical enclosure (The Namespace).</li>
+                <li><strong>DEV (Device)</strong>: Defines the equipment/hardware (Relays, Blocks, Switches).</li>
+                <li><strong>TERM (Terminal)</strong>: Defines the electrical "personality" of a specific pin or point.
+                </li>
+                <li><strong>WIR (Wire)</strong>: Defines the physical conductor and its point-to-point path.</li>
+                <li><strong>NET (Network)</strong>: Defines global signal attributes (Line weights, colors, logic).</li>
+            </ul>
+
+            <details>
+                <summary>Click to view full column details</summary>
+                <ol>
+                    <li><strong>ROW_TYPE:</strong> Discriminator (PAN, DEV, TERM, WIR, NET).</li>
+                    <li><strong>PANEL:</strong> The physical enclosure owning the object.</li>
+                    <li><strong>DEVICE_TAG:</strong> The unique ID (AA, TB1) within the panel.</li>
+                    <li><strong>TERMINAL:</strong> The physical pin/terminal ID (C01, 10).</li>
+                    <li><strong>TERM_KIND:</strong> The electrical logic (COIL, CONTACT_NO, CT, VT).</li>
+                    <li><strong>ELEM_ID:</strong> Grouping ID for schematic symbols (e.g., Pins 1 & 2 = `K1_COIL`).</li>
+                    <li><strong>DEVICE_PART:</strong> The catalog part number (SEL-421, UK5N).</li>
+                    <li><strong>TO_PANEL:</strong> Destination enclosure for wires.</li>
+                    <li><strong>TO_DEVICE:</strong> Destination equipment tag.</li>
+                    <li><strong>TO_TERMINAL:</strong> Destination pin/terminal ID.</li>
+                    <li><strong>CABLE_ID:</strong> Physical jacket/bundle identifier for multi-conductors.</li>
+                    <li><strong>STATUS:</strong> The countdown of loose ends (**C** for confirmed, **1?**–**5?** for
+                        pending).</li>
+                    <li><strong>SIGNAL_ID:</strong> The logical net name (**TRIP 1**, **CLOSE**, **52A**).</li>
+                    <li><strong>REMARKS:</strong> Metadata, pseudonyms (**SUB_411L**), and wire color/gauge notes.</li>
+                </ol>
+            </details>
+        </section>
+
+        <section id="using-terminal">
+            <h2>🖥️ Using TripCoil-Terminal</h2>
+            <p><strong>TripCoil-Terminal</strong> (`index.html`) is the interactive CLI application used to create and
+                verify your data. It runs directly in the browser and mimics a retro terminal environment.</p>
+
+            <h3>1. The CLI Interface</h3>
+            <p>The interface uses a prompt `>_` structure. You can type commands and press <strong>ENTER</strong>.
+            </p>
+            <ul>
+                <li><strong>History:</strong> Use the <strong>Up/Down Arrow Keys</strong> to cycle through previous
+                    commands.</li>
+                <li><strong>Mobile:</strong> On touch devices, use the green <strong>∧ / ∨</strong> buttons on the
+                    bottom-right.</li>
+            </ul>
+
+            <h3>2. Main Menu Modules</h3>
+            <p>When you start the application, you are presented with the Main Menu.</p>
+            <table>
+                <tr>
+                    <th>Command</th>
+                    <th>Module Description</th>
+                </tr>
+                <tr>
+                    <td><strong>1 (TRACE)</strong></td>
+                    <td><strong>Trace Tool:</strong> The primary verification mode. Enter loop-back and branch data to
+                        confirm wiring status.</td>
+                </tr>
+                <tr>
+                    <td><strong>2 (PLOT)</strong></td>
+                    <td><strong>Plotter:</strong> Generates a visual schematic graph of your currently loaded CSV data.
+                    </td>
+                </tr>
+                <tr>
+                    <td><strong>3 (DATA)</strong></td>
+                    <td><strong>Data Interface:</strong> A Notepad interface to Copy/Paste CSV text directly into the
+                        system.</td>
+                </tr>
+                <tr>
+                    <td><strong>4 (SET)</strong></td>
+                    <td><strong>Settings:</strong> (Experimental) Configuration for terminal colors and behaviors.</td>
+                </tr>
+            </table>
+
+            <h3>3. Global Commands</h3>
+            <p>These commands work from anywhere in the application.</p>
+            <ul>
+                <li><code>SAVE</code>: Downloads the current state as <strong>TC-Export.csv</strong>.</li>
+                <li><code>LOAD</code>: Opens a file picker to import a <strong>.csv</strong> file.</li>
+                <li><code>CLEAR</code> (or <code>CLS</code>): Wipes the terminal screen.</li>
+                <li><code>HELP</code> (or <code>?</code>): Shows the list of available commands.</li>
+                <li><code>QUIT</code> (or <code>EXIT</code>): Returns to the Main Menu.</li>
+            </ul>
+
+            <div class="callout callout-tip">
+                <strong>💡 Pro Tip: Safe Saving</strong>
+                TripCoil operates in memory. If you close the tab, your work is lost. Use the <code>SAVE</code> command
+                frequently to backup your progress to a file.
+            </div>
+        </section>
+
+        <section id="dev">
+            <h2>📦 1 — DEVICE DEFINITIONS DEV</h2>
+
+            <h3>1. Protection & Control Intelligence</h3>
+            <p>These are the "brains" of the substation. They have hundreds of terminals and complex internal logic.</p>
+            <p><em>Relays, Gateways, Communication Switches.</em></p>
+            <pre><code class="language-csv"># TYPE, PAN, TAG, TERM, KIND, ELEM, PART,    TO_P, TO_D, TO_T, CABL, STAT, SIGN, REMARKS
+  DEV,  1A,  AA,  ,     ,     ,     SEL-421, ,     ,     ,     ,     ,     ,     SUB_411L</code></pre>
+
+            <h3>2. Electromechanical & Interface Hardware</h3>
+            <p>These are physical moving parts that bridge the gap between digital logic and high-voltage reality.</p>
+            <p><em>Lockout Relays (86), Interposing Relays, Test Switches.</em></p>
+            <pre><code class="language-csv"># TYPE, PAN, TAG, TERM, KIND, ELEM, PART, TO_P, TO_D, TO_T, CABL, STAT, SIGN, REMARKS
+  DEV,  1A,  86G, ,     ,     ,     FT-1, ,     ,     ,     ,     ,     ,     Generator Lockout</code></pre>
+
+            <h3>3. Power Distribution & Protection</h3>
+            <p>The "Guts" of the panel's own power supply.</p>
+            <p><em>Circuit Breakers, Power Supplies, Fuses.</em></p>
+            <pre><code class="language-csv"># TYPE, PAN, TAG, TERM, KIND, ELEM, PART,       TO_P, TO_D, TO_T, CABL, STAT, SIGN, REMARKS
+  DEV,  1A,  CB1, ,     ,     ,     PHOENIX-6A, ,     ,     ,     ,     ,     ,     Main DC Input</code></pre>
+
+            <h3>4. Connection Infrastructure (Pass-Throughs)</h3>
+            <p>These don't "do" anything logically, but they are vital for the TripCoil-Terminal physical wiring path.
+            </p>
+            <p><em>Terminal Blocks (TB), Ground Buses, FT Case/Blocks.</em></p>
+            <pre><code class="language-csv"># TYPE, PAN, TAG, TERM, KIND, ELEM, PART, TO_P, TO_D, TO_T, CABL, STAT, SIGN, REMARKS
+  DEV,  1A,  TB1, ,     ,     ,     UK5N, ,     ,     ,     ,     ,     ,     Field Terminal Strip</code></pre>
+
+            <h3>5. Primary Equipment (Field Devices)</h3>
+            <p>Even though these are outside the panel, you define them so your "Source of Truth" knows where the cable
+                is going.</p>
+            <p><em>Power Transformers, Circuit Breakers (Primary), CT/PT Junction Boxes.</em></p>
+        </section>
+
+        <section id="term">
+            <h2>🔌 1 — DEVICE DEFINITIONS TERM</h2>
+            <p>In the TripCoil-Source (TC-S) language, the TERM row is the Interface Definition.</p>
+            <p>If the DEV row says, "A SEL-421 exists," the TERM rows say, "The SEL-421 has these specific pins, and
+                this is what they do electrically." You only need to define a TERM row when you want the
+                TripCoil-Plotter to understand the logic of a specific pin or when you want TripCoil-Terminal to know
+                the purpose of that point.</p>
+
+            <div class="callout callout-note">
+                <strong>📝 Note</strong>
+                Here is how I envision you using the TERM row for different types of equipment:
+            </div>
+
+            <h3>1. The "Logic" Terminals (Contacts & Coils)</h3>
+            <p>For devices like Lockout Relays (86) or Interposing Relays (K1), the TERM row tells the plotter which
+                pins belong together to form a symbol.</p>
+            <p><strong>Scenario:</strong> An ABB-86 lockout relay. Pins 1 & 2 are the Trip Coil. Pins 3 & 4 are a
+                Normally Open contact.</p>
+            <p><strong>The Logic:</strong> By giving pins 3 and 4 the same <code>ELEM_ID</code>, you tell the plotter
+                they are a single "unit."</p>
+            <pre><code class="language-csv"># TYPE, PAN, TAG, TERM, KIND,       ELEM,    PART, TO_P, TO_D, TO_T, CABL, STAT, SIGN,     REMARKS
+  TERM, 1A,  86G, 1,    COIL,       86_COIL, ,     ,     ,     ,     ,     ,     TRIP_BUS, Coil Start
+  TERM, 1A,  86G, 2,    COIL,       86_COIL, ,     ,     ,     ,     ,     ,     DC_NEG,   Coil End
+  TERM, 1A,  86G, 3,    CONTACT_NO, 86_CON1, ,     ,     ,     ,     ,     ,     GEN_TRIP, Contact A
+  TERM, 1A,  86G, 4,    CONTACT_NO, 86_CON1, ,     ,     ,     ,     ,     ,     BKR_TRIP, Contact B</code></pre>
+
+            <h3>2. The "Analog" Terminals (CTs & VTs)</h3>
+            <p>These are high-risk terminals. Using TERM_KIND allows for safety audits. If a wire carrying 125VDC lands
+                on a terminal marked CT, your system can throw a red flag.</p>
+            <pre><code class="language-csv"># TYPE, PAN, TAG, TERM, KIND, ELEM,    PART, TO_P, TO_D, TO_T, CABL, STAT, SIGN,   REMARKS
+  TERM, 1A,  AA,  Z01,  CT,   PH_A_CT, ,     ,     ,     ,     ,     ,     IA_POL, Phase A Polarity
+  TERM, 1A,  AA,  Z02,  CT,   PH_A_CT, ,     ,     ,     ,     ,     ,     IA_NON, Phase A Non-Pol</code></pre>
+
+            <h3>3. The "Passive" Terminals (Terminal Blocks)</h3>
+            <p>For a standard terminal block (TB1), you often don't need a TERM row for every single pin unless you want
+                to define specific behavior like a "Shorting Block" for CTs.</p>
+            <pre><code class="language-csv"># TYPE, PAN, TAG, TERM, KIND,       ELEM,    PART, TO_P, TO_D, TO_T, CABL, STAT, SIGN, REMARKS
+  TERM, 1A,  TB1, 01,   SHORT_LINK, CT_JMP1, ,     ,     ,     ,     ,     ,     ,     CT Phase A Shorting
+  TERM, 1A,  TB1, 02,   SHORT_LINK, CT_JMP1, ,     ,     ,     ,     ,     ,     ,     CT Phase A Shorting</code></pre>
+
+            <h4>Why use TERM rows instead of just WIR rows?</h4>
+            <ul>
+                <li><strong>Template Creation:</strong> You can create a "Gold Standard" list of TERM rows for a SEL-421
+                    once.</li>
+                <li><strong>Schematic Accuracy:</strong> The TERM row is what dictates the symbol. A WIR row just tells
+                    the plotter "draw a line from A to B." The TERM row tells it "at Point A, draw a Normally Closed
+                    contact."</li>
+                <li><strong>Physical Awareness:</strong> For TripCoil-Terminal, the TERM row can hold metadata like
+                    "Screw Torque" or "Wire Lug Type" in the REMARKS column.</li>
+            </ul>
+
+            <div class="callout callout-tip">
+                <strong>✨ Implementation Tip: The "Library" Strategy</strong>
+                Since you might have 50 terminals on a relay, you don't want to type 50 TERM rows every time. You can
+                keep a "Master Library" CSV where you define the TERM rows for a SEL-421 once. Your final project CSV
+                would only need to contain the WIR rows, and your script can "import" the terminal definitions based on
+                the DEVICE_PART found in the DEV row.
+            </div>
+        </section>
+
+        <section id="wir">
+            <h2>🔗 1 — DEVICE DEFINITIONS WIR</h2>
+            <p>In the <strong>TripCoil-Source (TC-S)</strong> language, the <code>WIR</code> row is the <strong>Physical
+                    Conductor</strong>.</p>
+            <p>If the <code>DEV</code> row defines the "boxes" and the <code>TERM</code> row defines the "logic of the
+                pins," the <code>WIR</code> row is the actual copper wire that connects point A to point B. This is the
+                row that drives your <strong>TripCoil-Terminal</strong> list for field technicians and allows
+                <strong>TripCoil-Plotter</strong> to draw the lines on the page.
+            </p>
+
+            <h3>1. The Anatomy of a WIR Row</h3>
+            <p>The <code>WIR</code> row is unique because it is the only row type that uses the
+                <strong>Destination</strong> columns (8, 9, and 10). It creates a bridge between two
+                <code>DEVICE_TAG</code> objects.
+            </p>
+
+            <h3>2. Situation Snippets for WIR</h3>
+
+            <h4>A. Internal Panel Wiring (Point-to-Point)</h4>
+            <p>This is a standard "jumper" or connection within the same enclosure.</p>
+            <pre><code class="language-csv"># TYPE, PAN, TAG, TERM,   KIND, ELEM, PART, TO_P, TO_D, TO_T, CABL, STAT, SIGN,   REMARKS
+  WIR,  1A,  AA,  OUT101, ,     ,     ,     1A,   TB1,  12,   W102, ,     TRIP_A, #14 AWG RED</code></pre>
+
+            <h4>B. The "Field" Cable (Multi-conductor)</h4>
+            <p>This represents a cable leaving the panel and going to a primary device, like a Breaker.</p>
+            <pre><code class="language-csv"># TYPE, PAN, TAG, TERM, KIND, ELEM, PART, TO_P,      TO_D, TO_T, CABL,     STAT, SIGN,     REMARKS
+  WIR,  1A,  TB1, 12,   ,     ,     ,     BKR_FIELD, BKR1, TC1,  CBL_BKR1, ,     TRIP_A,   Cond 1
+  WIR,  1A,  TB1, 13,   ,     ,     ,     BKR_FIELD, BKR1, 52A,  CBL_BKR1, ,     BKR_STAT, Cond 2</code></pre>
+
+            <h4>C. The "Jumper" (Shorting internal to a device)</h4>
+            <p>Sometimes you need to daisy-chain power between terminals on the same device.</p>
+            <pre><code class="language-csv"># TYPE, PAN, TAG, TERM, KIND, ELEM, PART, TO_P, TO_D, TO_T, CABL, STAT, SIGN,   REMARKS
+  WIR,  1A,  AA,  A02,  ,     ,     ,     1A,   AA,   A04,  JMP1, ,     DC_POS, Internal Relay Jumper</code></pre>
+
+            <h3>3. Why WIR is the "Source of Truth" for your Tools</h3>
+
+            <h4>For TripCoil-Terminal:</h4>
+            <p>Your terminal app can "pivot" this data. If a technician is looking at <strong>Terminal Block
+                    TB1-12</strong>, the app searches for <code>TB1</code> and <code>12</code> in <em>any</em> of the
+                From/To columns.</p>
+
+            <h4>For TripCoil-Plotter:</h4>
+            <p>The plotter looks at the <code>SIGNAL_ID</code> (e.g., <code>TRIP_A</code>). It finds every
+                <code>WIR</code> row with that ID and draws a continuous logical line. Even if there are 5 physical
+                `WIR` segments, the Plotter knows they are all the same Logic Net.
+            </p>
+
+            <div class="callout callout-caution">
+                <strong>💡 Golden Rule of TripCoil</strong>
+                Every <code>WIR</code> row must:
+                <ol>
+                    <li>Reference a real source terminal (PANEL + DEVICE + TERMINAL)</li>
+                    <li>Reference a real destination terminal (TO_PANEL + TO_DEVICE + TO_TERMINAL)</li>
+                </ol>
+            </div>
+
+            <div class="callout callout-warning">
+                <strong>⚠️ Rule of One Direction</strong>
+                To keep your CSV clean, it is best practice to <strong>only list a wire once</strong>.
+                <ul>
+                    <li><strong>Bad:</strong> Having one row for `AA -> TB1` and another row for `TB1 -> AA`.</li>
+                    <li><strong>Good:</strong> Always list wires from the "Source" (Relay/Logic) to the "Destination"
+                        (Terminal Block/Field) or follow a consistent hierarchy (Panel -> Device -> Field).</li>
+                </ul>
+            </div>
+        </section>
+
+        <section id="net">
+            <h2>📡 1 — DEVICE DEFINITIONS NET</h2>
+            <p>In the <strong>TripCoil-Source (TC-S)</strong> ecosystem, the <code>NET</code> row is the <strong>Logical
+                    Configuration</strong>.</p>
+            <p>If <code>WIR</code> defines the physical copper, the <code>NET</code> row defines the "rules" for the
+                signal traveling through that copper. Think of it as the <strong>Style Sheet</strong> for your
+                electrical signals.</p>
+
+            <p>Without NET, TripCoil is a wiring tracker. <strong>With NET, TripCoil becomes a digital twin of the
+                    protection system.</strong></p>
+
+            <h3>1. The Anatomy of a NET Row</h3>
+            <p>The <code>NET</code> row doesn't care about specific terminals. It only cares about the
+                <strong>SIGNAL_ID</strong>.
+            </p>
+            <ul>
+                <li><strong>ROW_TYPE</strong>: `NET`</li>
+                <li><strong>SIGNAL_ID</strong>: The unique name used in your `WIR` and `TERM` rows (e.g., `TRIP_A`).
+                </li>
+                <li><strong>TERM_KIND</strong>: General classification for the signal (e.g., `DC_POWER`, `AC_VOLTAGE`,
+                    `COMMS`).</li>
+                <li><strong>REMARKS</strong>: The "Settings" or "Attributes" (e.g., `COLOR=RED, GAUGE=12,
+                    LAYER=TRIP_LOGIC`).</li>
+            </ul>
+
+            <h3>2. Why do you need NET?</h3>
+            <p>NET turns a wiring CSV into a renderable schematic.</p>
+
+            <h4>Example A: Power Distribution</h4>
+            <pre><code class="language-csv"># TYPE, PAN, TAG, TERM, KIND,     ELEM, PART, TO_P, TO_D, TO_T, CABL, STAT, SIGN,   REMARKS
+  NET,  ,    ,    ,     DC_POWER, ,     ,     ,     ,     ,     ,     ,     DC_POS, COLOR=RED; GAUGE=10; DASHED=FALSE</code></pre>
+
+            <h4>Example B: CT Circuits</h4>
+            <pre><code class="language-csv"># TYPE, PAN, TAG, TERM, KIND,      ELEM, PART, TO_P, TO_D, TO_T, CABL, STAT, SIGN,   REMARKS
+  NET,  ,    ,    ,     CT_SIGNAL, ,     ,     ,     ,     ,     ,     ,     IA_POL, COLOR=ORANGE; WEIGHT=2.0; LAYER=ANALOG</code></pre>
+
+            <h4>Example C: Internal Logic</h4>
+            <pre><code class="language-csv"># TYPE, PAN, TAG, TERM, KIND,  ELEM, PART, TO_P, TO_D, TO_T, CABL, STAT, SIGN,       REMARKS
+  NET,  ,    ,    ,     LOGIC, ,     ,     ,     ,     ,     ,     ,     67P_PICKUP, COLOR=BLUE; GAUGE=22; LAYER=PROTECTION</code></pre>
+
+            <h3>3. How the TripCoil Tools use NET</h3>
+            <p><strong>For TripCoil-Plotter:</strong> When the plotter prepares to draw a line for
+                <code>SIGNAL_ID: TRIP_A</code>, it finds <code>COLOR=RED</code> and sets the digital pen to Red.
+            </p>
+            <p><strong>For TripCoil-Terminal:</strong> Your terminal app can say: "This is Signal TRIP_A. According to
+                the NET definition, this should be a RED 14AWG wire." This acts as a built-in error check.</p>
+        </section>
+
+        <section id="pan">
+            <h2>🗄️ 2 — PANEL DEFINITIONS</h2>
+            <p>The <strong>Panel (PAN)</strong> row acts as the highest-level container. It is the physical "envelope"
+                for everything else. While you can define devices without a specific panel row, having one allows you to
+                define the physical attributes of the enclosure itself.</p>
+
+            <h3>1. The Role of the PAN Row</h3>
+            <p>The <code>PAN</code> row defines the environment. It is the "Root" of your hierarchy.</p>
+
+            <h3>2. The Namespace Concept (Critical)</h3>
+            <p>The Panel name is what prevents data collisions. In a substation, you might have ten devices labeled "AA"
+                or "TB1."</p>
+            <ul>
+                <li><strong>1A:AA</strong> and <strong>2B:AA</strong> are treated as completely different physical
+                    objects.</li>
+                <li>Whenever <strong>TripCoil-Terminal</strong> generates a wiring list, it uses the <code>PANEL</code>
+                    column to filter down to exactly what the technician sees when they open a single cabinet door.</li>
+            </ul>
+
+            <h3>3. Example Panel Definition Snippet</h3>
+            <pre><code class="language-csv"># TYPE, PAN, TAG, TERM, KIND, ELEM, PART,    TO_P, TO_D, TO_T, CABL, STAT, SIGN, REMARKS
+  PAN,  1A,  ,    ,     ,     ,     ,        ,     ,     ,     ,     ,     ,     Primary Relay Panel
+  PAN,  1B,  ,    ,     ,     ,     ,        ,     ,     ,     ,     ,     ,     Auxiliary Logic Panel
+  DEV,  1A,  AA,  ,     ,     ,     SEL-421, ,     ,     ,     ,     ,     ,     Main Relay (Located in 1A)
+  DEV,  1B,  AA,  ,     ,     ,     SEL-421, ,     ,     ,     ,     ,     ,     Back-up Relay (Located in 1B)</code></pre>
+
+            <h3>5. Managing Large Panels</h3>
+            <p>When you have a panel with 500+ wires, the <code>PAN</code> row becomes your best friend for
+                <strong>Database Integrity</strong>. You can run a script to "Sum the Panel" to find total devices,
+                jumpers, and cables.
+            </p>
+        </section>
+
+        <section id="tag">
+            <h2>🏷️ 3 — DEVICE TAG DEFINITION</h2>
+            <p>In the <strong>TripCoil-Source (TC-S)</strong> schema, the <strong>Device Tag (Index 3)</strong> is the
+                unique "address" of a component within its panel.</p>
+
+            <h3>1. The "Namespace" Rule</h3>
+            <p>The Device Tag is <strong>not</strong> globally unique; it is unique <strong>within its Panel</strong>.
+                <code>Panel 1A + Tag AA</code> = Relay 1. <code>Panel 2B + Tag AA</code> = Relay 2.
+            </p>
+
+            <h3>2. Standardized Tagging Strategy</h3>
+            <ul>
+                <li><strong>AA - ZZ</strong>: Protection Relays</li>
+                <li><strong>TB</strong>: Terminal Blocks</li>
+                <li><strong>K</strong>: Interposing Relays</li>
+                <li><strong>SW / FT</strong>: Switches / Test Switches</li>
+                <li><strong>CB / F</strong>: Breakers / Fuses</li>
+                <li><strong>RTAC / COMM</strong>: Communications</li>
+            </ul>
+
+            <h3>4. Handling "Pseudonyms" vs. "Tags"</h3>
+            <p>In <strong>TripCoil-Source</strong>, the <code>DEVICE_TAG</code> (AA) is the <strong>Physical
+                    Label</strong> on the equipment, while the pseudonym belongs in the <strong>REMARKS</strong> column.
+            </p>
+            <pre><code class="language-csv"># TYPE, PAN, TAG, TERM, KIND, ELEM, PART, TO_P, TO_D, TO_T, CABL, STAT, SIGN, REMARKS
+  DEV,  1A,  AA,  ,     ,     ,     ,     ,     ,     ,     ,     ,     ,     SUB_411L (Functional Pseudonym)
+  WIR,  1A,  AA,  ,     ,     ,     ,     ,     ,     ,     ,     ,     ,     Wire landed on physical tag AA</code></pre>
+
+            <div class="callout callout-important">
+                <strong>🛡️ Validation Check</strong>
+                The most important rule for Device Tags in your CSV system is:
+                <strong>Every <code>DEVICE_TAG</code> used in a <code>WIR</code> or <code>TERM</code> row must have a
+                    corresponding <code>DEV</code> row defining what it is.</strong>
+            </div>
+        </section>
+
+        <section id="term-def">
+            <h2>📍 4 — TERMINAL DEFINITION</h2>
+            <p>In the <strong>TripCoil-Source (TC-S)</strong> schema, the <strong>Terminal (Index 4)</strong> is the
+                specific "Point of Contact" on a device. It is the most granular level of the physical world.</p>
+
+            <h3>1. The Anatomy of a Terminal String</h3>
+            <ul>
+                <li><strong>Alpha-Numeric (Relays):</strong> `A01`, `C24`, `Z05`</li>
+                <li><strong>Hardware-Point (RTUs/IO):</strong> `X1-1`, `TB2-10`</li>
+                <li><strong>Polarity-Based (CTs/VTs):</strong> `X1`, `X2`, `H1`, `H2`</li>
+                <li><strong>Functional (Switches):</strong> `1`, `2`, `3`, `4`</li>
+            </ul>
+
+            <h3>2. Terminal Logic in Different Row Types</h3>
+            <table>
+                <tr>
+                    <th>ROW_TYPE</th>
+                    <th>How TERMINAL is used</th>
+                </tr>
+                <tr>
+                    <td><strong>DEV</strong></td>
+                    <td><strong>Ignored.</strong> The device row defines the whole "box," not individual pins.</td>
+                </tr>
+                <tr>
+                    <td><strong>TERM</strong></td>
+                    <td><strong>Defined.</strong> This is where you declare that "Terminal A01" on "Device AA" is a
+                        `CONTACT_NO`.</td>
+                </tr>
+                <tr>
+                    <td><strong>WIR</strong></td>
+                    <td><strong>Connected.</strong> This is the physical landing point for the conductor.</td>
+                </tr>
+            </table>
+
+            <h3>3. Handling the "Terminal Block" (TB) Exception</h3>
+            <p>I recommend a <strong>Prefix-Number</strong> format (e.g., `TB1-01`). This makes the CSV much easier to
+                search. If you search for "1", you get every device. If you search for "TB1-01", you get exactly that
+                point.</p>
+        </section>
+
+        <section id="kind">
+            <h2>🧬 5 — TERMINAL KIND</h2>
+            <p>The "Electrical Intelligence" of the system. While the Terminal ID is just a label, the
+                <code>TERM_KIND</code> tells <strong>TripCoil-Plotter</strong> which symbol to draw and
+                <strong>TripCoil-Terminal</strong> what safety rules to apply.
+            </p>
+
+            <h3>1. The Standardized Vocabulary</h3>
+            <ul>
+                <li><strong>COIL</strong>: Relay or Contactor coil.</li>
+                <li><strong>CONTACT_NO</strong>: Normally Open Contact.</li>
+                <li><strong>CONTACT_NC</strong>: Normally Closed Contact.</li>
+                <li><strong>CONTACT_CO</strong>: Change-over (Form C).</li>
+                <li><strong>DI</strong>: Digital Input (Optoisolated).</li>
+                <li><strong>DO</strong>: Digital Output (Transistor).</li>
+                <li><strong>CT</strong>: Current Transformer Input.</li>
+                <li><strong>VT</strong>: Voltage Transformer Input.</li>
+                <li><strong>PWR_POS / PWR_NEG</strong>: DC/AC Power Supply.</li>
+                <li><strong>GND</strong>: Chassis or Earth Ground.</li>
+                <li><strong>FT_SW</strong>: Test Switch Blade.</li>
+            </ul>
+        </section>
+
+        <section id="elem">
+            <h2>🔗 6 — ELEMENT ID</h2>
+            <p>In the <strong>TripCoil-Source (TC-S)</strong> schema, <strong>ELEM_ID (Index 6)</strong> is the
+                "Associative Logic." It is what groups individual terminals into a single, recognizable component on a
+                schematic.</p>
+
+            <h3>1. The "Grouping" Concept</h3>
+            <p>A single physical device (like a relay or a lockout) often contains multiple functional parts. By giving
+                multiple pins the same <code>ELEM_ID</code>, you tell the plotter they are a single "unit."</p>
+
+            <h3>3. Naming Conventions for ELEM_ID</h3>
+            <ul>
+                <li><strong>COIL_1, COIL_2:</strong> Physical coils.</li>
+                <li><strong>CON_1, CON_2...:</strong> Generic contacts.</li>
+                <li><strong>TRIP_OUT, CLOSE_OUT:</strong> High-speed outputs.</li>
+                <li><strong>IA_PHASE, IB_PHASE:</strong> CT inputs.</li>
+                <li><strong>FT_1, FT_2:</strong> Test switches.</li>
+            </ul>
+        </section>
+
+        <section id="part">
+            <h2>📑 7 — DEVICE PART</h2>
+            <p>The "Catalog Link." It bridges the gap between a generic tag (like `AA`) and the physical reality of the
+                equipment (like a `SEL-421-0-1-2-3`).</p>
+
+            <h3>1. The Role of the DEV Row</h3>
+            <p>The <code>DEVICE_PART</code> column is primarily used in <code>ROW_TYPE: DEV</code>. It acts as a pointer
+                to a library or a manual.</p>
+
+            <h3>2. Standardizing Part Numbers</h3>
+            <p>Include the "Base Model" followed by the specific "Order Code" if it affects the terminal layout (e.g.,
+                `SEL-421-4`, `ELECTRO-SERIES-24`, `PHOENIX-UK5N`).</p>
+
+            <h3>3. The "Library Lookup" Logic</h3>
+            <p>The power of `DEVICE_PART` comes from <strong>Inheritance</strong>. You define the `TERM` rows for a
+                `SEL-421` once in a library, and any device using that part number inherits those definitions.</p>
+        </section>
+
+        <section id="to-panel">
+            <h2>🚪 8 — TO PANEL</h2>
+            <p>In the <strong>TripCoil-Source (TC-S)</strong> schema, <strong>TO_PANEL (Index 8)</strong> represents the
+                <strong>Physical Boundary</strong>. It is the first coordinate of the destination address for a wire.
+            </p>
+
+            <h3>1. Defining the Scope of the "Jump"</h3>
+            <ul>
+                <li><strong>Internal Wire:</strong> If `PANEL` is `1A` and `TO_PANEL` is `1A`, the wire never leaves the
+                    cabinet.</li>
+                <li><strong>External Wire:</strong> If `PANEL` is `1A` and `TO_PANEL` is `BKR_502`, the wire leaves the
+                    panel through a gland or conduit.</li>
+            </ul>
+
+            <div class="callout callout-caution">
+                <strong>🚫 Data Integrity: The "Return Path"</strong>
+                A core rule of the TC-S language is that the <code>TO_PANEL</code> must be a valid panel name that
+                exists either in your current CSV or in a "Master Site Map."
+            </div>
+        </section>
+
+        <section id="to-device">
+            <h2>🎯 9 — TO DEVICE</h2>
+            <p>The specific destination "Object" at the other end of the wire. While `TO_PANEL` gets you to the right
+                room or cabinet, `TO_DEVICE` tells you exactly which piece of equipment you are walking toward.</p>
+
+            <h3>5. Validation: The "Ghost Device" Check</h3>
+            <p>One of the most powerful features of your TC-S language is the ability to run a <strong>Ghost
+                    Check</strong>. Every tag listed in `TO_DEVICE` must exist as a `DEVICE_TAG` in a `DEV` row
+                somewhere in your project. This prevents "orphaned" wires that lead to nowhere.</p>
+        </section>
+
+        <section id="to-term">
+            <h2>📌 10 — TO TERMINAL</h2>
+            <p>The "Landing Point." It is the final coordinate in the physical address string. While `TO_DEVICE` tells
+                you which box to look at, `TO_TERMINAL` tells you exactly which screw to turn.</p>
+
+            <h3>2. Why this is the "Commissioning Key"</h3>
+            <p>For your <strong>TripCoil-Terminal</strong> application, this column is the most important piece of data
+                for a field technician. It enables <strong>Point-to-Point Verification</strong> and <strong>Continuity
+                    Testing</strong>.</p>
+
+            <h3>5. Validation: The "Physicality" Check</h3>
+            <p>A validation script can perform a <strong>Terminal Existence Check</strong>. It looks up the
+                `DEVICE_PART` for that device and checks a master library to see if `TO_TERMINAL` actually exists on
+                that model.</p>
+        </section>
+
+        <section id="cable">
+            <h2>🧵 11 — CABLE ID</h2>
+            <p>The <strong>Physical Bundle Identifier</strong>. While the `WIR` row describes a single conductor, the
+                `CABLE_ID` tells your system which conductors are physically bound together inside the same jacket.</p>
+
+            <h3>2. Why this is Critical for TripCoil-Terminal</h3>
+            <p>When a technician is working in the field, they aren't looking for a "Trip Wire"—they are looking for
+                "Cable CBL_BKR1." This allows grouping wires by cable pull, managing spares, and printing cable labels.
+            </p>
+
+            <h3>5. Naming Conventions for Cable IDs</h3>
+            <ul>
+                <li><strong>W01, W02...</strong>: Internal panel wire bundles.</li>
+                <li><strong>C01, C02...</strong>: Control cables (Multi-conductor).</li>
+                <li><strong>P01, P02...</strong>: Power cables (High current).</li>
+                <li><strong>FO01, FO02...</strong>: Fiber Optic cables.</li>
+            </ul>
+        </section>
+
+        <section id="status">
+            <h2>🚦 12 — STATUS</h2>
+            <p>The <strong>Status (Index 12)</strong> handles up to 5 pending wires. In substation panels, you can
+                easily have multiple conductors stacked on a single terminal point. By using the <strong>NUM?</strong>
+                status as a countdown, you create a high-resolution "Punch List."</p>
+
+            <div class="mermaid">
+                graph LR
+                S3["STATUS: 3?"] -->|Land 1 Wire| S2["STATUS: 2?"]
+                S2 -->|Land 1 Wire| S1["STATUS: 1?"]
+                S1 -->|Land 1 Wire| C["STATUS: C"]
+                style S3 fill:#f55,stroke:#333
+                style S2 fill:#fa5,stroke:#333
+                style S1 fill:#ff5,stroke:#333
+                style C fill:#5f5,stroke:#333
+            </div>
+
+            <h3>1. The 5-Wire Status Hierarchy</h3>
+            <ul>
+                <li><strong>C (Confirmed)</strong>: 0 wires pending. The terminal is fully landed and verified.</li>
+                <li><strong>1? to 5?</strong>: The number of conductors still unverified or loose at this point.</li>
+            </ul>
+
+            <h3>3. Workflow Example: The "Countdown"</h3>
+            <ol>
+                <li><strong>Morning:</strong> The CSV shows `5?`. The technician sees a bundle of 5 wires.</li>
+                <li><strong>Mid-Day:</strong> They land 3 wires. They update the CSV to `2?`.</li>
+                <li><strong>End of Day:</strong> The last two are landed and verified. The status updates to `C`.</li>
+            </ol>
+        </section>
+
+        <section id="signal">
+            <h2>📶 13 — SIGNAL ID</h2>
+            <p>This is where the "Logic" (Schematic) meets the "Copper" (Wiring). Common substation signals like
+                <strong>TRIP 1</strong>, <strong>TRIP 2</strong>, <strong>CLOSE</strong>, and <strong>52A</strong>
+                behave as logical nets.
+            </p>
+
+            <h3>3. How the Signals behave in your Tools</h3>
+            <p><strong>For TripCoil-Plotter:</strong> The Plotter sees `SIGNAL_ID: 52A` and `TERM_KIND: DI`, draws a
+                Digital Input symbol, and connects it to the breaker status contact across the page.</p>
+            <p><strong>For TripCoil-Terminal:</strong> When a technician is working on `TB1-10`, the app shows "Signal:
+                TRIP 1". If they see a wire labeled "CLOSE", they know they have a physical error.</p>
+        </section>
+
+        <section id="remarks">
+            <h2>📝 14 — REMARKS</h2>
+            <p>In the <strong>TripCoil-Source (TC-S)</strong> schema, <strong>REMARKS (Index 14)</strong> is the
+                "Elastic Layer." It is the catch-all column for metadata that doesn't fit into a rigid logical or
+                physical category.</p>
+
+            <h3>1. The Role of REMARKS across Row Types</h3>
+            <ul>
+                <li><strong>PAN</strong>: Physical location or GPS notes.</li>
+                <li><strong>DEV</strong>: Pseudonyms / Functional names.</li>
+                <li><strong>TERM</strong>: Pin-specific notes (e.g., "Polarity end").</li>
+                <li><strong>WIR</strong>: Wire color / Gauge / Type.</li>
+                <li><strong>NET</strong>: Global signal notes.</li>
+            </ul>
+
+            <div class="callout callout-note">
+                <strong>Why this is powerful:</strong>
+                Your <strong>TripCoil-Plotter</strong> can be set to "Alias Mode." It looks at the `WIR` row for `AA`,
+                jumps to the `DEV` row for `AA`, pulls `SUB_411L` from the Remarks, and uses <em>that</em> name on the
+                schematic instead of the generic "AA."
+            </div>
+
+            <div class="callout callout-important">
+                <strong>Special Indicator: !</strong>
+                If you see a <strong>!</strong> (Exclamation Point), it means the wire has been confirmed on one
+                terminal but <strong>not</strong> the other end (Single-Ended Trace).
+            </div>
+
+            <h3>5. Final Project Snapshot: The "TripCoil-Source" Master Header</h3>
+            <pre><code class="language-csv">ROW_TYPE, PANEL, DEVICE_TAG, TERMINAL, TERM_KIND, ELEM_ID, DEVICE_PART, TO_PANEL, TO_DEVICE, TO_TERMINAL, CABLE_ID, STATUS, SIGNAL_ID, REMARKS</code></pre>
+        </section>
+
+    </main>
+
+    <script>
+        mermaid.initialize({ startOnLoad: true, theme: 'dark' });
+    </script>
+</body>
+
+</html>

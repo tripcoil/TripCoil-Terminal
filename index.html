@@ -91,7 +91,10 @@
 
     .input-row {
       display: flex;
-      align-items: center;
+      align-items: flex-end;
+      /* Align input with bottom of text */
+      flex-wrap: wrap;
+      /* Allow wrapping for multi-line prompts */
       /* Fix for baseline jitter */
       gap: 10px;
       padding: 2px 0;
@@ -428,18 +431,29 @@
       }
     }
 
-    function renderInput(prompt, isMultiLine = false) {
+    function renderInput(prompt, preContent = '') {
       let active = document.getElementById('active-row');
       if (active) active.remove();
 
-      const row = document.createElement('div');
-      row.id = 'active-row';
-      row.className = 'input-row';
-      if (isMultiLine) row.classList.add('multi-line');
+      const container = document.createElement('div');
+      container.id = 'active-row';
 
-      // Using the robust .input-group fix
+      // If we have pre-content (like the Queue), add it as a block above
+      if (preContent) {
+        const preDiv = document.createElement('div');
+        preDiv.className = 'input-pre-content';
+        preDiv.innerHTML = preContent;
+        container.appendChild(preDiv);
+      }
+
+      const row = document.createElement('div');
+      row.className = 'input-row';
+      // No longer need multi-line class logic if we separate content
+
       row.innerHTML = `<span class="prompt">${prompt}</span> <span class="input-group"><span>${inputBuffer}</span><span class="caret"></span></span>`;
-      content.appendChild(row);
+      container.appendChild(row);
+
+      content.appendChild(container);
       terminal.scrollTop = terminal.scrollHeight;
     }
 
@@ -630,10 +644,12 @@
     const TraceTool = {
       // State
       discoveryStack: [], // Renamed from stack
+      rows: [], // LIVE CSV DATA
       history: [],
       inputs: {},
       phase: 'SEED',
       currentFrom: null,
+      lastVerified: null, // New State for "Verified" header
       undoStack: [], // Snapshots
 
       // Constants
@@ -656,10 +672,12 @@
         clearTerminal();
         setHeader(''); // Initially blank as requested
         this.discoveryStack = [];
+        this.rows = this.parseRows(textArea.value); // Load from Global Text Area
         this.history = [];
         this.undoStack = [];
         this.inputs = {};
         this.currentFrom = null;
+        this.lastVerified = null;
         this.phase = this.PHASE.SEED_PANEL;
         inputBuffer = '';
         this.render();
@@ -673,6 +691,7 @@
           discoveryStack: JSON.parse(JSON.stringify(this.discoveryStack)),
           history: JSON.parse(JSON.stringify(this.history)),
           currentFrom: this.currentFrom ? JSON.parse(JSON.stringify(this.currentFrom)) : null,
+          lastVerified: this.lastVerified ? JSON.parse(JSON.stringify(this.lastVerified)) : null,
           lastInput: processedInput
         };
         this.undoStack.push(snapshot);
@@ -688,7 +707,9 @@
         this.inputs = snap.inputs;
         this.discoveryStack = snap.discoveryStack;
         this.history = snap.history;
+        this.history = snap.history;
         this.currentFrom = snap.currentFrom;
+        this.lastVerified = snap.lastVerified; // Restore verified state
 
         // Visual: Remove last line
         removeLastLine();
@@ -810,63 +831,138 @@
       },
 
       processJump(toCount) {
-        // 1. Determine Status (Column 12)
-        // Default: If count > 0, it's pending ("Count?"). If 0, it's Complete ("C").
-        const status = toCount > 0 ? `${toCount}?` : 'C';
+        // 1. Find Matching Row in CSV Data (Bidirectional & Case-Insensitive)
+        // Ensure inputs are clean/upper for comparison
+        const cp = this.currentFrom.p.toUpperCase();
+        const cd = this.currentFrom.d.toUpperCase();
+        const ct = this.currentFrom.t.toUpperCase();
+        const tp = this.inputs.toP.toUpperCase();
+        const td = this.inputs.toD.toUpperCase();
+        const tt = this.inputs.toT.toUpperCase();
 
-        // 2. Record WIR Row
-        // Mapping: From(2,3,4) -> To(8,9,10) ... Status(12)
-        this.history.push({
-          from: { p: this.currentFrom.p, d: this.currentFrom.d, t: this.currentFrom.t },
-          to: { p: this.inputs.toP, d: this.inputs.toD, t: this.inputs.toT },
-          callsBack: this.inputs.callsBack,
-          status: status
+        const match = this.rows.find(r => {
+          if (r.type !== 'WIR') return false;
+          // Fallback to empty string if undefined (though parseRows handles it)
+          const rp = (r.pan || '').toUpperCase();
+          const rd = (r.dev || '').toUpperCase();
+          const rt = (r.term || '').toUpperCase();
+          const rtp = (r.to_pan || '').toUpperCase();
+          const rtd = (r.to_dev || '').toUpperCase();
+          const rtt = (r.to_term || '').toUpperCase();
+
+          // Forward
+          if (rp === cp && rd === cd && rt === ct && rtp === tp && rtd === td && rtt === tt) return true;
+          // Reverse
+          if (rp === tp && rd === td && rt === tt && rtp === cp && rtd === cd && rtt === ct) return true;
+
+          return false;
         });
 
-        appendLine(`<div style="color:var(--dim)">> TRACED: ${this.currentFrom.t} -> ${this.inputs.toT} [${status}]</div>`);
+        let status = 'C';
+        // 2. Update Status
+        if (match) {
+          match.status = 'C';
+          // If callsBack logic needed?
+          // "If ... confirms the 'Call-Back', immediately update... STATUS to 'C'"
+          // Assuming 'C' implies callback verified or N/A.
+          // If callsBack === 'N', traditionally we flagged it '!' or similar.
+          // But 'C' counts as verified.
+        } else {
+          // Create NEW Row (User found wire not in CSV)
+          this.rows.push({
+            type: 'WIR',
+            pan: this.currentFrom.p, dev: this.currentFrom.d, term: this.currentFrom.t,
+            kind: '', elem: '', part: '',
+            to_pan: this.inputs.toP, to_dev: this.inputs.toD, to_term: this.inputs.toT,
+            cable: '', status: 'C', signal: '', remarks: 'FIELD_ADD'
+          });
+        }
 
-        // 3. Update Discovery Stack (The Countdown)
-        // If currentFrom is in discoveryStack, decrement it.
-        // We need to find the specific reference in the discoveryStack.
+        // --- LEGACY HISTORY PUSH (Keep for now or remove?) ---
+        // Plan said: "Update Export Logic to use internal state"
+        // So history is now secondary or redundant.
+        // But the UI (TraceTool) might rely on history for something else?
+        // `markHistoryComplete()` is now obsolete if we use `this.rows`.
+
+        // 3. Update Discovery Stack (THE COUNTDOWN)
+        // With Live CSV, do we still need discoveryStack?
+        // "Refresh UI... TraceTool to move to the next item in the discoveryStack"
+        // Yes, discoveryStack drives the *flow* (where we go next).
+        // But the *density* logic in discoveryStack is now redundant?
+        // User said: "Count number of rows... Use this count to populate the display."
+        // So we don't need manual density input if data exists.
+        // BUT logic for `processJump(count)` assumes manual density for new checks.
+        // Let's keep stack for circle-back flow.
+
+        // LEGACY STACK LOGIC (Keep for flow control)
         const stackIdx = this.discoveryStack.findIndex(n =>
           n.p === this.currentFrom.p && n.d === this.currentFrom.d && n.t === this.currentFrom.t
         );
 
         if (stackIdx !== -1) {
+          // We still decrement to pop it from stack when "done"
+          // Or should we check CSV status?
+          // "Move to next item... or clear [PENDING] list"
+          // If we decrement manually, we might de-sync from CSV.
+          // Better: Check if *any* status includes '?' for this terminal?
+          // But for now, let's keep the manual decrement to close the loop.
           this.discoveryStack[stackIdx].count--;
           if (this.discoveryStack[stackIdx].count <= 0) {
-            this.markHistoryComplete(this.discoveryStack[stackIdx]);
-            this.discoveryStack.splice(stackIdx, 1); // Remove completed
-            // appendLine(`<div style="color:var(--dim)">> ${this.currentFrom.t} COMPLETED</div>`);
-          } else {
-            // appendLine(`<div style="color:var(--dim)">> ${this.currentFrom.t} PENDING (${this.discoveryStack[stackIdx].count})</div>`);
+            this.discoveryStack.splice(stackIdx, 1);
           }
         }
 
-        // 4. Handle "To" Terminal
+        // 4. Handle "To" Terminal Logic (Next Step)
+        // Check if destination has pending wires in CSV?
+        // If yes, push to stack automatically?
+        // "Scaling: handles 100-line test runs effortlessly"
+        // If I jump to T2, and T2 has 5 pending wires in CSV, I should probably auto-push T2 to stack.
+        // Instead of asking "Density?".
+        // LET'S IMPLEMENT THAT AUTO-DENSITY CHECK.
+
+        let nextCount = toCount; // Default (if manual)
+
+        // Check CSV for destination
+        const destPending = this.rows.filter(r =>
+          r.type === 'WIR' &&
+          r.pan === this.inputs.toP &&
+          r.dev === this.inputs.toD &&
+          r.term === this.inputs.toT &&
+          r.status !== 'C'
+        );
+
+        if (destPending.length > 0) {
+          nextCount = destPending.length;
+        }
+
         const toNode = {
           p: this.inputs.toP,
           d: this.inputs.toD,
           t: this.inputs.toT,
-          count: toCount
+          count: nextCount,
+          total: nextCount // Can be revised based on CSV total
         };
 
-        if (toCount > 0) {
-          // Push To Node to Discovery Stack (Step E)
+        const lastMove = {
+          from: { p: this.currentFrom.p, d: this.currentFrom.d, t: this.currentFrom.t },
+          to: { p: this.inputs.toP, d: this.inputs.toD, t: this.inputs.toT }
+        };
+
+        if (nextCount > 0) {
+          // Push To Node to Discovery Stack
           this.discoveryStack.push(toNode);
 
-          // Move forward: To becomes From
+          // Move forward
           this.currentFrom = toNode;
-
-          // UPDATE HEADER NOW (Jump Confirmed)
           setHeader(`📍    ${this.currentFrom.p} ${this.currentFrom.d} ${this.currentFrom.t}    📍`);
-
-          this.startDestinationPhase();
+          this.startDestinationPhase(); // Clears this.inputs
         } else {
-          // Dead End (Step F)
-          // Circle Back
+          // Dead End -> Circle Back
           this.circleBack();
         }
+
+        // Set Last Verified
+        this.lastVerified = lastMove;
       },
 
       circleBack() {
@@ -917,8 +1013,156 @@
           case P.COMPLETE: label = 'COMPLETE (TYPE QUIT)'; break;
         }
 
-        if (label) renderInput(label, this.phase === P.DENSITY);
+        // If we are showing "TO PANEL", prepend the Physical Queue
+        if (this.phase === P.DEST_PANEL) {
+          const queueHtml = this.renderQueue();
+          if (queueHtml) {
+            // Pass as preContent to renderInput
+            renderInput(label, queueHtml);
+            return; // Initial render done
+          }
+        }
+
+        if (label) renderInput(label);
+      },
+
+      parseRows(csvText) {
+        if (!csvText) return [];
+        // Simple CSV Parser (assuming standard 14-col format)
+        // Header: ROW_TYPE, PANEL, DEVICE_TAG, TERMINAL, TERM_KIND, ELEM_ID, DEVICE_PART, TO_PANEL, TO_DEVICE, TO_TERMINAL, CABLE_ID, STATUS, SIGNAL_ID, REMARKS
+        return csvText.split('\n')
+          .map(line => line.trim())
+          .filter(line => line && !line.startsWith('#') && !line.startsWith('ROW_TYPE'))
+          .map(line => {
+            const cols = line.split(',').map(c => c.trim());
+            // Mapping to Object for easier access
+            return {
+              raw: line, // Note: raw might have spaces, but object properties are clean
+              type: cols[0],
+              pan: cols[1], dev: cols[2], term: cols[3],
+              kind: cols[4], elem: cols[5], part: cols[6],
+              to_pan: cols[7], to_dev: cols[8], to_term: cols[9],
+              cable: cols[10], status: cols[11], signal: cols[12], remarks: cols[13]
+            };
+          });
+      },
+
+      renderQueue() {
+        let out = '';
+
+        if (!this.currentFrom) return '';
+
+        const cur = this.currentFrom;
+        const cp = cur.p.toUpperCase();
+        const cd = cur.d.toUpperCase();
+        const ct = cur.t.toUpperCase();
+
+        // 1. Find ALL wires connected to this terminal (Bidirectional)
+        const relevantRows = this.rows.filter(r => {
+          if (r.type !== 'WIR') return false;
+
+          // Fallback to empty string for safety
+          const rp = (r.pan || '').toUpperCase();
+          const rd = (r.dev || '').toUpperCase();
+          const rt = (r.term || '').toUpperCase();
+          const rtp = (r.to_pan || '').toUpperCase();
+          const rtd = (r.to_dev || '').toUpperCase();
+          const rtt = (r.to_term || '').toUpperCase();
+
+          // Connected if current node matches EITHER end
+          const matchSource = (rp === cp && rd === cd && rt === ct);
+          const matchDest = (rtp === cp && rtd === cd && rtt === ct);
+
+          return matchSource || matchDest;
+        });
+
+        const verified = relevantRows.filter(r => r.status === 'C');
+        const pending = relevantRows.filter(r => r.status !== 'C');
+
+        // Helper to formatting the "Other End"
+        const fmtOther = (r) => {
+          const rp = (r.pan || '').toUpperCase();
+          const rd = (r.dev || '').toUpperCase();
+          const rt = (r.term || '').toUpperCase();
+          // If current Node is Source, return Dest. Else return Source.
+          if (rp === cp && rd === cd && rt === ct) {
+            return `${r.to_pan} ${r.to_dev} ${r.to_term}`;
+          } else {
+            return `${r.pan} ${r.dev} ${r.term}`;
+          }
+        };
+
+        // 2. Render Verified List
+        verified.forEach(r => {
+          // Using simple [ ✓ ] format
+          out += `<span class="ok">[ ✓ ] VERIFIED: ${fmtOther(r)}</span><br>`;
+        });
+
+        // 3. Render Pending List
+        pending.forEach((r, idx) => {
+          // Using [ ? ] format for pending
+          out += `<span class="muted">[ ? ] PENDING : ${fmtOther(r)}</span><br>`;
+        });
+
+        // 4. "Ghost" Wires (Manual Density > CSV Data)
+        let ghostCount = 0;
+        if (this.currentFrom.count !== undefined) {
+          ghostCount = this.currentFrom.count - pending.length;
+        }
+
+        if (ghostCount > 0) {
+          // Pending List Separator from Verified?
+          // Actually, we just want to append these after real pending.
+
+          // If we have verified but NO real pending, but YES ghosts, we need the separator.
+          // Or if we have real pending, separation logic is already handled by output flow?
+          // No, we haven't added the middle separator yet in this implementation.
+        }
+
+        // Let's redo the flow cleanly:
+        // A. Verified
+        // -- Separator if Verified and (Pending OR Ghosts) --
+        // B. Pending (Real + Ghosts)
+
+        const hasPending = (pending.length > 0 || ghostCount > 0);
+
+        if (verified.length > 0 && hasPending) {
+          out += '<span>----------------------------------------</span><br>';
+        }
+
+        // Render Real Pending (already in out var if we moved it?)
+        // Wait, I appended to `out` above. Let's restart building `out` to be safe/clean order.
+
+        // RESTART BUILD
+        let finalOut = '';
+        verified.forEach(r => {
+          finalOut += `<span class="ok">[ ✓ ] VERIFIED: ${fmtOther(r)}</span><br>`;
+        });
+
+        if (verified.length > 0 && hasPending) {
+          // Separator removed as per user request
+          finalOut += '<br>'; // Optional: Keep some spacing? User asked to get rid of lines. Let's just use BR for spacing.
+        }
+
+        pending.forEach((r, idx) => {
+          finalOut += `<span class="muted">[ ? ] PENDING : ${fmtOther(r)}</span><br>`;
+        });
+
+        if (ghostCount > 0) {
+          for (let i = 0; i < ghostCount; i++) {
+            finalOut += `<span class="muted">[ ? ] PENDING : WIRE ${pending.length + i + 1} (UNIDENTIFIED)</span><br>`;
+          }
+        }
+
+        // Final Separator before prompt removed
+        // if (finalOut) {
+        //   finalOut += '<span>----------------------------------------</span><br>';
+        // }
+
+        return finalOut;
       }
+
+
     };
 
     // --- GLOBAL HANDLERS ---
@@ -941,22 +1185,21 @@
     }
 
     function openNotepad() {
-      // Generate CSV from History
+      // Generate CSV from LIVE rows if available, else usage history (fallback)
       let content = '';
 
-      if (currentState === STATE_TRACE && TraceTool.history.length > 0) {
-        // CSV Mapping:
-        // 2,3,4 = From P,D,T
-        // 8,9,10 = To P,D,T
-        // 12 = Status
-        // Note: Header color (callsBack) logic not explicitly mapped to a specific CSV column in 'Specification' table 
-        // EXCEPT "Header Color (Green = Y, Red = N)". Usually this assumes user manually handles it or it's logic.
-        // Wait, "Step A... Step F...". CSV Mapping table in prompt:
-        // A -> Cols 2,3,4. B -> Cols 8,9,10. D -> Col 12.
-        // It doesn't map 'Calls Back' to a column, just visual Header Color.
-        // Original code mapped it to near end. 
-        // Let's stick to the prompt's explicit mapping.
-
+      if (currentState === STATE_TRACE && TraceTool.rows.length > 0) {
+        // Use the LIVE state (which has updated 'C' statuses)
+        // Reconstruct CSV from objects
+        const header = "ROW_TYPE, PANEL, DEVICE_TAG, TERMINAL, TERM_KIND, ELEM_ID, DEVICE_PART, TO_PANEL, TO_DEVICE, TO_TERMINAL, CABLE_ID, STATUS, SIGNAL_ID, REMARKS";
+        const rows = TraceTool.rows.map(r => {
+          // Rebuild line
+          // r.type, r.pan, r.dev, r.term, r.kind, r.elem, r.part, r.to_pan, r.to_dev, r.to_term, r.cable, r.status, r.signal, r.remarks
+          return `${r.type},${r.pan},${r.dev},${r.term},${r.kind || ''},${r.elem || ''},${r.part || ''},${r.to_pan || ''},${r.to_dev || ''},${r.to_term || ''},${r.cable || ''},${r.status || ''},${r.signal || ''},${r.remarks || ''}`;
+        });
+        content = header + '\n' + rows.join('\n');
+      } else if (currentState === STATE_TRACE && TraceTool.history.length > 0) {
+        // Fallback to legacy history if no rows loaded?
         content = TraceTool.history.map(h => {
           const status = h.status + (h.callsBack === 'N' ? '!' : '');
           return `WIR,${h.from.p},${h.from.d},${h.from.t},,,,${h.to.p},${h.to.d},${h.to.t},,${status},,`;
@@ -966,7 +1209,6 @@
       if (content) textArea.value = content;
 
       overlay.style.display = 'flex';
-      // overlay.querySelector('.notepad-header span').textContent = 'Notepad';
     }
 
     function closeNotepad() {
@@ -1153,8 +1395,15 @@
     // --- FILE OPERATIONS ---
     function saveCSV() {
       let csv = '';
-      if (currentState === STATE_TRACE && TraceTool.history.length > 0) {
-        // Generate CSV from history if active trace exists
+      if (currentState === STATE_TRACE && TraceTool.rows.length > 0) {
+        // Export LIVE state
+        const header = "ROW_TYPE, PANEL, DEVICE_TAG, TERMINAL, TERM_KIND, ELEM_ID, DEVICE_PART, TO_PANEL, TO_DEVICE, TO_TERMINAL, CABLE_ID, STATUS, SIGNAL_ID, REMARKS";
+        const rows = TraceTool.rows.map(r => {
+          return `${r.type},${r.pan},${r.dev},${r.term},${r.kind || ''},${r.elem || ''},${r.part || ''},${r.to_pan || ''},${r.to_dev || ''},${r.to_term || ''},${r.cable || ''},${r.status || ''},${r.signal || ''},${r.remarks || ''}`;
+        });
+        csv = header + '\n' + rows.join('\n');
+      } else if (currentState === STATE_TRACE && TraceTool.history.length > 0) {
+        // Generate CSV from history if active trace exists (Fallback)
         csv = TraceTool.history.map(h => {
           const status = h.status + (h.callsBack === 'N' ? '!' : '');
           return `WIR,${h.from.p},${h.from.d},${h.from.t},,,,${h.to.p},${h.to.d},${h.to.t},,${status},,`;
